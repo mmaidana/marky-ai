@@ -1,0 +1,17 @@
+# Configuration for Niche Finder Lambda function
+
+# AWS resources
+s3_bucket_name: "niche-finder-results"  # Replace with actual S3 bucket name
+sqs_queue_url: "your-sqs-queue-url"  # Replace with actual SQS queue URL
+sns_topic_arn: "arn:aws:sns:<region>:<account-id>:niche-finder-notification"  # Replace with actual SNS topic ARN
+cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as needed)
+visibility_timeout: None # Visibility timeout for SQS messages
+
+# Notification details
+phone_number: "+0403030303"  # Replace with actual phone number
+email_address: ""mfawsaibot@gmail.com"  # Replace with actual email address
+
+
+# Add other configuration parameters as needed
+api_key: "your-gemini-api-key"  # Example for a hypothetical API key
+# ... other configuration options
