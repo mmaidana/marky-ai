@@ -2,6 +2,17 @@ import os
 import json
 import boto3  # Import boto3 for AWS interactions
 
+#@todo: 
+# 1. Replace the placeholder code with actual Gemini API integration code.
+# 2. Implement the logic to handle S3, SQS, and SNS interactions.
+# 3. Update the function to process the prompt and config files (if provided).
+# 4. Implement error handling and logging for robustness.
+# 5. Customize the SNS message content based on the processing results.
+# 6. Test the Lambda function with sample input data. Simulate API responses.
+# 7. Deploy the Lambda function using AWS CDK. (set up credentials, permissions, etc.)
+
+
+
 def main(event, context):
 
     # Retrieve configuration from environment variables

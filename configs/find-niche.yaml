@@ -8,10 +8,12 @@ cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as ne
 visibility_timeout: None # Visibility timeout for SQS messages
 
 # Notification details
-phone_number: "+0403030303"  # Replace with actual phone number
+phone_number: "+0406252420"  # Replace with actual phone number
 email_address: ""mfawsaibot@gmail.com"  # Replace with actual email address
 
 
 # Add other configuration parameters as needed
 api_key: "your-gemini-api-key"  # Example for a hypothetical API key
+api_endpoint: "https://<region>.vertexai.google/v1/projects/<project-id>/locations/<location>/models/<model-id>:generate" # Example for a hypothetical API endpoint
+
 # ... other configuration options

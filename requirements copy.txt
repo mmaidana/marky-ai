@@ -1,4 +1,0 @@
-aws-cdk-lib
-constructs
-boto3
-
