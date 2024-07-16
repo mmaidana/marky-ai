@@ -34,7 +34,7 @@ def get_topic_name_from_config(config_data):
         raise KeyError("Missing 'topic_name' key in configuration data")
 
 
-class AiMarketingStack(cdk.Stack):
+class AiMarketingGenStack(cdk.Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)

@@ -3,11 +3,11 @@ import os
 
 import aws_cdk as cdk
 
-from ai_marketing.ai_marketing_stack import AiMarketingStack
+from ai_marketing.ai_marketing_gen_stack import AiMarketingGenStack
 
 
 app = cdk.App()
-AiMarketingStack(app, "AiMarketingStack",
+AiMarketingGenStack(app, "AiMarketingGenStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
