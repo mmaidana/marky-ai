@@ -2,8 +2,8 @@
 
 # AWS resources
 s3_bucket_name: "niche-finder-results"  # Replace with actual S3 bucket name
-sqs_queue_url: "your-sqs-queue-url"  # Replace with actual SQS queue URL
-sns_topic_arn: "arn:aws:sns:<region>:<account-id>:niche-finder-notification"  # Replace with actual SNS topic ARN
+sqs_queue_url: "https://sqs.ap-southeast-2.amazonaws.com/694180342670/niche-finder"  # Replace with actual SQS queue URL
+sns_topic_arn: "arn:aws:sns:ap-southeast-2:694180342670:niche-finder"  # Replace with actual SNS topic ARN
 cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as needed)
 visibility_timeout: None # Visibility timeout for SQS messages
 
