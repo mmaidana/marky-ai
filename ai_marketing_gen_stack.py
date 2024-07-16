@@ -1,10 +1,11 @@
 from constructs import Construct
 import aws_cdk as cdk
-from aws_cdk.aws_iam import ManagedPolicy, Role, ServicePrincipal  # Import ManagedPolicy and Role
+from aws_cdk.aws_iam import  ManagedPolicy, Role, ServicePrincipal  # Import ManagedPolicy and Role
 from aws_cdk.aws_sns import Subscription, SubscriptionProtocol, Topic  # Import SubscriptionProtocol
 from aws_cdk.aws_iam import Role, ServicePrincipal
 from aws_cdk.aws_lambda import Function, Code, Runtime
 from aws_cdk.aws_sqs import Queue
+from aws_cdk import aws_iam as iam
 from aws_cdk.aws_s3 import Bucket
 from aws_cdk.aws_s3_assets import Asset  # Import Asset class
 from aws_cdk.aws_sns import Topic, Subscription
@@ -13,6 +14,8 @@ from aws_cdk.aws_events import Rule, Schedule
 from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_lambda as lambda_
 import yaml
+from aws_cdk import aws_sns_subscriptions as subscriptions
+from aws_cdk import aws_sns as sns
 
 
 def get_topic_name_from_config(config_data):
@@ -45,54 +48,55 @@ class AiMarketingGenStack(cdk.Stack):
 
         if not prompt_file_name or not config_file_name:
             raise ValueError("Missing prompt_file or config_file context variables")
+        
+        # Assuming 'config_file_name' contains the name of your YAML file without the extension
+        config_file_path = f"configs/{config_file_name}.yaml"
 
-        # Load configuration from YAML file
-        config_asset = Asset(self, "ConfigAsset", path=f"configs/{config_file_name}.yaml")
-        config_data = yaml.safe_load(config_asset.open())
-
+        # Load configuration from YAML file directly
+        with open(config_file_path, 'r') as file:
+            config_data = yaml.safe_load(file)
+            
         # IAM Role for Lambda function
         lambda_role = Role(self, "LambdaRole",
-                           assumed_by=ServicePrincipal("lambda.amazonaws.com"))
-
+                        assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"))
         # Grant permissions to Lambda
         lambda_role.add_managed_policy(
-            managed_policy=ManagedPolicy.from_aws_managed_policy_arn(
-                "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-            )
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
         )
         lambda_role.add_managed_policy(
-            managed_policy=ManagedPolicy.from_aws_managed_policy_arn(
-                "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
-            )
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSNSFullAccess")
         )
         lambda_role.add_managed_policy(
-            managed_policy=ManagedPolicy.from_aws_managed_policy_arn(
-                "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
-            )
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSQSFullAccess")
         )
         lambda_role.add_managed_policy(
-            managed_policy=ManagedPolicy.from_aws_managed_policy_arn(
-                "arn:aws:iam::aws:policy/service-role/AmazonTextractFullAccess"  # Assuming Gemini API integration
-            )
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonTextractFullAccess")  # Corrected policy name
         )
 
         # S3 Bucket for results
         niche_finder_results_bucket = Bucket(self, "NicheFinderResultsBucket",
-                                             bucket_name=config_data["s3_bucket_name"])
+                                             bucket_name=config_data["s3_bucket_name"], versioned=True)
 
         # SQS Queue for notifications
         niche_finder_queue = Queue(self, "NicheFinderQueue",
-                                   visibility_timeout=config_data["visibility_timeout"])
+                                   queue_name=config_data["sqs_queue_name"],
+                                   visibility_timeout=cdk.Duration.seconds(int(config_data["visibility_timeout"])))
 
         # SNS Topic for notifications
         niche_finder_topic = Topic(self, "NicheFinderNotificationTopic",
                                     topic_name=get_topic_name_from_config(config_data))  # Placeholder implementation
+        
+        # Subscribe Queues to Topics
+        #Assuming niche_finder_topic is an instance of sns.Topic
+        #and niche_finder_queue is an instance of sqs.Queue
+
+        niche_finder_topic.add_subscription(subscriptions.SqsSubscription(niche_finder_queue))
 
         # Lambda function (receive prompt and config file names as parameters)
         lambda_fn = Function(self, "NicheFinderLambda",
                              runtime=Runtime.PYTHON_3_9,
-                             code=Code.asset("lambda_handler"),
-                             handler="main.py",
+                             code=Code.from_asset("lambda_handler"),
+                             handler="main.handler",
                              role=lambda_role,
                              environment={
                                  "S3_BUCKET_NAME": niche_finder_results_bucket.bucket_name,

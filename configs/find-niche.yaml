@@ -1,15 +1,17 @@
 # Configuration for Niche Finder Lambda function
 
 # AWS resources
-s3_bucket_name: "niche-finder-results"  # Replace with actual S3 bucket name
-sqs_queue_url: "https://sqs.ap-southeast-2.amazonaws.com/694180342670/niche-finder"  # Replace with actual SQS queue URL
-sns_topic_arn: "arn:aws:sns:ap-southeast-2:694180342670:niche-finder"  # Replace with actual SNS topic ARN
+s3_bucket_name: "niche-finder-results-bucket"  # Replace with actual S3 bucket name
+sqs_queue_name: "niche-finder-queue"  # Replace with actual SQS queue name
+#sqs_queue_url: "https://sqs.ap-southeast-2.amazonaws.com/694180342670/niche-finder-queue"  # Replace with actual SQS queue URL
+#sns_topic_arn: "arn:aws:sns:ap-southeast-2:694180342670:niche-finder-"  # Replace with actual SNS topic ARN
+topic_name: "niche-finder-notifications"  # Replace with actual SNS topic name
 cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as needed)
-visibility_timeout: None # Visibility timeout for SQS messages
+visibility_timeout: 300 # Visibility timeout for SQS messages
 
 # Notification details
-phone_number: "+0406252420"  # Replace with actual phone number
-email_address: ""mfawsaibot@gmail.com"  # Replace with actual email address
+phone_number: "+610406252420"  # Replace with actual phone number
+email_address: "mfawsaibot@gmail.com"  # Replace with actual email address
 
 
 # Add other configuration parameters as needed

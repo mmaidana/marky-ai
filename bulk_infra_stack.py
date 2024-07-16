@@ -28,19 +28,19 @@ class InfraStack(cdk.Stack):
         niche_finder_queue = sqs.Queue(
             self,
             "niche-finder-queue",
-            visibility_timeout=None,
+            visibility_timeout=300,
         )
         affiliate_program_queue = sqs.Queue(
             self,
             "affiliate-program-queue",
-            visibility_timeout=None,
+            visibility_timeout=300,
         )
-        campaign_queue = sqs.Queue(self, "campaign-queue", visibility_timeout=None)
+        campaign_queue = sqs.Queue(self, "campaign-queue", visibility_timeout=300)
         campaign_content_queue = sqs.Queue(
-            self, "campaign-content-queue", visibility_timeout=None
+            self, "campaign-content-queue", visibility_timeout=300
         )
         campaign_metrics_queue = sqs.Queue(
-            self, "campaign-metrics-queue", visibility_timeout=None
+            self, "campaign-metrics-queue", visibility_timeout=300
         )
 
         # Subscribe Queues to Topics
