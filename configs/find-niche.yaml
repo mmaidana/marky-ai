@@ -17,3 +17,9 @@ api_key: "your-gemini-api-key"  # Example for a hypothetical API key
 api_endpoint: "https://<region>.vertexai.google/v1/projects/<project-id>/locations/<location>/models/<model-id>:generate" # Example for a hypothetical API endpoint
 
 # ... other configuration options
+
+#database settings
+dynamodb_region: "ap-southeast-2"  # Replace with actual AWS region
+dynamodb_endpoint: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # Replace with actual DynamoDB endpoint
+
+
