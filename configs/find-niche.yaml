@@ -1,11 +1,9 @@
 # Configuration for Niche Finder Lambda function
 
 # AWS resources
-s3_bucket_name: "niche-finder-results-bucket"  # Replace with actual S3 bucket name
-sqs_queue_name: "niche-finder-queue"  # Replace with actual SQS queue name
-#sqs_queue_url: "https://sqs.ap-southeast-2.amazonaws.com/694180342670/niche-finder-queue"  # Replace with actual SQS queue URL
-#sns_topic_arn: "arn:aws:sns:ap-southeast-2:694180342670:niche-finder-"  # Replace with actual SNS topic ARN
-topic_name: "niche-finder-notifications"  # Replace with actual SNS topic name
+s3_bucket_name: "niche-finder"  # Replace with actual S3 bucket name
+sqs_queue_name: "niche-finder"  # Replace with actual SQS queue name
+topic_name: "niche-finder"  # Replace with actual SNS topic name
 cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as needed)
 visibility_timeout: 300 # Visibility timeout for SQS messages
 
@@ -13,15 +11,48 @@ visibility_timeout: 300 # Visibility timeout for SQS messages
 phone_number: "+610406252420"  # Replace with actual phone number
 email_address: "mfawsaibot@gmail.com"  # Replace with actual email address
 
-
 # Add other configuration parameters as needed
 api_key: "your-gemini-api-key"  # Example for a hypothetical API key
 api_endpoint: "https://<region>.vertexai.google/v1/projects/<project-id>/locations/<location>/models/<model-id>:generate" # Example for a hypothetical API endpoint
 
 # ... other configuration options
 
-#database settings
-dynamodb_region: "ap-southeast-2"  # Replace with actual AWS region
-dynamodb_endpoint: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # Replace with actual DynamoDB endpoint
+#table names
+table_names:
+  niche: "niche-finder" 
+  affiliate_program: "affiliate-program"
+  subscription_service_cost: "subscription-service-cost"
+  campaign: "campaign"
+  campaign_content: "campaign-content"
+  campaign_metrics: "campaign-metrics"
 
+#topic names
+topic_names:
+  #niche: "niche-finder" 
+  affiliate_program: "affiliate-program"
+  campaign: "campaign"
+  campaign_content: "campaign-content"
+  campaign_metrics: "campaign-metrics"
 
+  #Queue Configs
+  queue_configs:
+  #niche:
+  #  name: niche-finder
+  #  visibility_timeout: 300
+  affiliate_program:
+    name: affiliate-program
+    visibility_timeout: 300
+  campaign:
+    name: campaign
+    visibility_timeout: 300
+  campaign_content:
+    name: campaign-content
+    visibility_timeout: 300
+  campaign_metrics:
+    name: campaign-metrics
+    visibility_timeout: 300
+
+#data stream names
+data_stream_name: "data-stream"
+
+  
