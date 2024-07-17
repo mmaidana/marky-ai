@@ -19,7 +19,7 @@ api_endpoint: "https://<region>.vertexai.google/v1/projects/<project-id>/locatio
 
 #table names
 table_names:
-  niche: "niche-finder" 
+  niche-finder: "niche-finder" 
   affiliate_program: "affiliate-program"
   subscription_service_cost: "subscription-service-cost"
   campaign: "campaign"
@@ -28,17 +28,13 @@ table_names:
 
 #topic names
 topic_names:
-  #niche: "niche-finder" 
   affiliate_program: "affiliate-program"
   campaign: "campaign"
   campaign_content: "campaign-content"
   campaign_metrics: "campaign-metrics"
 
-  #Queue Configs
-  queue_configs:
-  #niche:
-  #  name: niche-finder
-  #  visibility_timeout: 300
+#Queue Configs
+queue_configs:
   affiliate_program:
     name: affiliate-program
     visibility_timeout: 300
