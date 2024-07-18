@@ -3,7 +3,6 @@ import aws_cdk as cdk
 from aws_cdk.aws_iam import  Role  # Import ManagedPolicy and Role
 from aws_cdk.aws_lambda import Function, Code, Runtime
 from aws_cdk import aws_iam as iam
-from aws_cdk import aws_events as events
 from aws_cdk.aws_events import Rule, Schedule
 from aws_cdk import aws_events_targets as targets
 from lib.custom_constructs.config_construct import ConfigConstruct
