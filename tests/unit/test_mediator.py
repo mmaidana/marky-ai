@@ -50,3 +50,42 @@ class TestMediatorStack(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    
+import unittest
+from aws_cdk import core
+from lib.shared_constructs.mediator import MediatorStack
+
+class TestMediatorStack(unittest.TestCase):
+    def setUp(self):
+        self.app = core.App()
+        self.stack = MediatorStack(self.app, "TestStack")
+
+    def test_stack_creation(self):
+        self.assertIsNotNone(self.stack)
+
+    def test_s3_buckets(self):
+        self.assertIsNotNone(self.stack.buckets)
+        self.assertEqual(len(self.stack.buckets), 2)  # Update the expected count based on your configuration
+
+    def test_sqs_queues(self):
+        self.assertIsNotNone(self.stack.queues)
+        self.assertEqual(len(self.stack.queues), 3)  # Update the expected count based on your configuration
+
+    def test_sns_topics(self):
+        self.assertIsNotNone(self.stack.topics)
+        self.assertEqual(len(self.stack.topics), 4)  # Update the expected count based on your configuration
+
+    def test_bucket_instance_types(self):
+        for bucket_key, bucket in self.stack.buckets.items():
+            self.assertIsInstance(bucket, s3.Bucket)
+
+    def test_queue_instance_types(self):
+        for queue_name, queue in self.stack.queues.items():
+            self.assertIsInstance(queue, sqs.Queue)
+
+    def test_topic_instance_types(self):
+        for topic_key, topic in self.stack.topics.items():
+            self.assertIsInstance(topic, sns.Topic)
+
+if __name__ == '__main__':
+    unittest.main()

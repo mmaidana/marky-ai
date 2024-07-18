@@ -3,7 +3,7 @@
 Create scalable and modular folder structure #done
 Add Logging
 Add Error Handling #done
-Add Unit Tests
+Add Unit Tests  #done
 move lambda iam roles from consumers/ to infra/ #done can't be done
 add phone numbers and emails to all subscriptions #done
 destroy firehose
