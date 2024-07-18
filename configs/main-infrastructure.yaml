@@ -1,0 +1,49 @@
+# AWS Resources Configurations
+
+#bucket names
+bucket_names:
+  niche-finder: "niche-finder" 
+  affiliate_program: "affiliate-program"
+  subscription_service_cost: "subscription-service-cost"
+  campaign: "campaign"
+  campaign_content: "campaign-content"
+  campaign_metrics: "campaign-metrics"
+
+
+#table names
+table_names:
+  niche-finder: "niche-finder" 
+  affiliate_program: "affiliate-program"
+  subscription_service_cost: "subscription-service-cost"
+  campaign: "campaign"
+  campaign_content: "campaign-content"
+  campaign_metrics: "campaign-metrics"
+
+#topic names
+topic_names:
+  niche-finder: "niche-finder"
+  affiliate_program: "affiliate-program"
+  campaign: "campaign"
+  campaign_content: "campaign-content"
+  campaign_metrics: "campaign-metrics"
+
+#Queue Configs
+queue_configs:
+  niche-finder:
+    name: niche-finder
+    visibility_timeout: 300
+  affiliate_program:
+    name: affiliate-program
+    visibility_timeout: 300
+  campaign:
+    name: campaign
+    visibility_timeout: 300
+  campaign_content:
+    name: campaign-content
+    visibility_timeout: 300
+  campaign_metrics:
+    name: campaign-metrics
+    visibility_timeout: 300
+
+#data stream names
+data_stream_name: "data-stream"

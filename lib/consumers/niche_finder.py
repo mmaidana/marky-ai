@@ -96,7 +96,7 @@ class AiMarketingGenStack(cdk.Stack):
         lambda_fn = Function(self, "NicheFinderLambda",
                              runtime=Runtime.PYTHON_3_9,
                              code=Code.from_asset("lambda_handler"),
-                             handler="main.handler",
+                             handler="NicheFinder.handler",
                              role=lambda_role,
                              environment={
                                  "S3_BUCKET_NAME": niche_finder_results_bucket.bucket_name,

@@ -9,5 +9,7 @@ __pycache__
 .cdk.staging
 cdk.out
 old-cdk.out
+old
 ai_marketing/old-ai_marketing_gen_stack.py
 app copy.py
+

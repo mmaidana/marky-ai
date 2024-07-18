@@ -43,8 +43,7 @@ class BulkInfraStack(cdk.Stack):
         data_stream_name = config_data.get("data_stream_name", "default-data-stream") # Get the data stream name from the config file
         s3_bucket_name = config_data["s3_bucket_name"] # Get the S3 bucket name from the config file
         self.s3_bucket = s3.Bucket.from_bucket_name(self, "BucketById",  s3_bucket_name) # Get the S3 bucket name from the config file
-        bucket_arn = "arn:aws:s3:::"+ s3_bucket_name       # Create S3 bucket ARN
-
+        
         # Create SNS Topics and SQS Queues
         sns_topics = self._create_sns_topics(config_data)
         sqs_queues = self._create_sqs_queues(config_data)

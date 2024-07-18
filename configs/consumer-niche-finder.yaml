@@ -1,0 +1,8 @@
+# Configuration for Niche Finder Lambda function
+#cloudwatch schedule expression (Cron Job) Specify how often to run the Lambda function to query for finding niches
+cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as needed)
+
+# Add other configuration parameters as needed
+api_key: "your-gemini-api-key"  # Example for a hypothetical API key
+api_endpoint: "https://<region>.vertexai.google/v1/projects/<project-id>/locations/<location>/models/<model-id>:generate" # Example for a hypothetical API endpoint
+

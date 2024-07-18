@@ -13,7 +13,7 @@ import boto3  # Import boto3 for AWS interactions
 
 
 
-def main(event, context):
+def nicheFinder(event, context):
 
     # Retrieve configuration from environment variables
     s3_bucket_name = os.environ["S3_BUCKET_NAME"]
