@@ -1,10 +1,10 @@
 import unittest
-from aws_cdk import core
+import aws_cdk as cdk
 from lib.shared_constructs.mediator import MediatorStack
 
 class TestMediatorStack(unittest.TestCase):
     def setUp(self):
-        self.app = core.App()
+        self.app = cdk.App()
         self.stack = MediatorStack(self.app, "TestStack")
 
     def test_stack_creation(self):
@@ -52,12 +52,12 @@ if __name__ == '__main__':
     unittest.main()
     
 import unittest
-from aws_cdk import core
+import aws_cdk as cdk
 from lib.shared_constructs.mediator import MediatorStack
 
 class TestMediatorStack(unittest.TestCase):
     def setUp(self):
-        self.app = core.App()
+        self.app = cdk.App()
         self.stack = MediatorStack(self.app, "TestStack")
 
     def test_stack_creation(self):
