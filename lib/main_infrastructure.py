@@ -6,8 +6,7 @@ from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_kinesis as kinesis
-from aws_cdk.aws_iam import Role, ServicePrincipal, PolicyStatement
-from aws_cdk.aws_lambda import Function, Code, Runtime #, RuntimeInfo
+from aws_cdk.aws_iam import Role
 from aws_cdk import aws_kinesisfirehose as firehose
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_iam as iam
@@ -15,7 +14,6 @@ import yaml
 from aws_cdk import aws_sns_subscriptions as subscriptions
 import logging
 import uuid
-from aws_cdk import aws_logs as logs
 from .custom_constructs.config_construct import ConfigConstruct
 from aws_cdk import aws_sns_subscriptions as subscriptions
 

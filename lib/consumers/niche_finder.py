@@ -1,6 +1,6 @@
 from constructs import Construct
 import aws_cdk as cdk
-from aws_cdk.aws_iam import  ManagedPolicy, Role, ServicePrincipal  # Import ManagedPolicy and Role
+from aws_cdk.aws_iam import  Role  # Import ManagedPolicy and Role
 from aws_cdk.aws_lambda import Function, Code, Runtime
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_events as events
