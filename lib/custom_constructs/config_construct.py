@@ -16,11 +16,18 @@ class ConfigConstruct(Construct):
             raise ValueError(f"Error parsing YAML file: {e}") from e
 
     def get_value(self, key, default=None):
-        return self.config.get(key)
+        try:
+            return self.config.get(key)
+        except KeyError:
+            return default
     
     def __getitem__(self, key):
-        # Leverage the existing get_value method
-        return self.get_value(key)
+        try:
+            # Leverage the existing get_value method
+            return self.get_value(key)
+        except KeyError:
+            # Handle key not found error
+            raise KeyError(f"Key not found: {key}")
     
 
 

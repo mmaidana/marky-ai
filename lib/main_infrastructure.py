@@ -269,7 +269,7 @@ class MainInfrastructureStack(cdk.Stack):
     
     # Define the Lambda processor
     def _create_lambda_processor(self, config_data, process_dynamodb_update, tables):
-        table_names = config_data.get_value('table_names', [])
+        table_names = tables.keys()
         try:
             # Define the Lambda processor
             lambda_processor = lambda_.Function.from_function_arn(
