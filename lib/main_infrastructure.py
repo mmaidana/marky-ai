@@ -29,9 +29,8 @@ class MainInfrastructureStack(cdk.Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
-        
-        #Loading Config Data
         try:
+            # Loading Config Data
             config_data = ConfigConstruct(self, "MainInfrastructureConfig", config_file_path="configs/main-infrastructure.yaml") 
             # ... create S3 buckets, DynamoDB tables, etc. using bucket_names and table_names
 
@@ -69,7 +68,10 @@ class MainInfrastructureStack(cdk.Stack):
             lambda_processor = self._create_lambda_processor(config_data,process_dynamodb_update, tables)        
         
             # Create Firehose delivery streams
-            firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id)
+            firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
+
+            # Add tags to all resources for easy identification
+            cdk.Tags.of(self).add("Key", "Value")
 
         except FileNotFoundError as e:
             print(f"Error: Configuration file not found - {e}")
@@ -86,18 +88,6 @@ class MainInfrastructureStack(cdk.Stack):
             #cdk.App().synth()  # Optional: Synthesize the CDK CloudFormation template even on error
             
     # Defining the helper methods for creating resources
-
-        # Grant Firehose permission to invoke Lambda functions
-        firehose_role.add_to_policy(
-            statement=iam.PolicyStatement(
-                actions=["lambda:InvokeFunction"],
-                resources=[get_timestamp_function.function_arn],
-            )
-        )
-
-        # Add tags to all resources for easy identification
-        cdk.Tags.of(self).add("Key", "Value")
-    
     # Create Bucket Method
     def _create_s3_buckets(self, config_data, unique_id):
         bucket_names = config_data.get_value('bucket_names', {})
@@ -298,14 +288,26 @@ class MainInfrastructureStack(cdk.Stack):
             return None
 
     
-    def _create_firehose_delivery_streams(self, firehose_role, lambda_processor, data_stream_name, s3_bucket, table_names, unique_id):
+    def _create_firehose_delivery_streams(self, firehose_role, lambda_processor, data_stream_name, s3_bucket, table_names, unique_id, get_timestamp_function):
         
         # Initialize a counter for unique name generation
         counter = 1
     
         delivery_stream_names = [data_stream_name] + [f"{name}-firehose" for name in table_names]
-    
         firehose_streams = {}
+
+        # Grant Firehose permission to invoke Lambda functions
+        def _grant_firehose_invoke_lambda_permission(firehose_role, get_timestamp_function):
+            try:
+                firehose_role.add_to_policy(
+                    statement=iam.PolicyStatement(
+                        actions=["lambda:InvokeFunction"],
+                        resources=[get_timestamp_function.function_arn],
+                    )
+                )
+            except Exception as e:
+                print(f"Failed to grant Firehose invoke permission to Lambda function: {e}")
+
         for name in delivery_stream_names:
             # Append a counter to ensure uniqueness
             unique_delivery_stream_name = f"{name}-{unique_id}"
@@ -351,6 +353,7 @@ class MainInfrastructureStack(cdk.Stack):
                         ),
                     )
                     firehose_streams[unique_delivery_stream_name] = firehose_stream
+                    _grant_firehose_invoke_lambda_permission(firehose_role, get_timestamp_function)
                 except Exception as e:
                     print(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': {e}")
             else:
