@@ -1,5 +1,5 @@
 import unittest
-from aws_cdk import core
+import aws_cdk as cdk
 from lib.main_infrastructure import MainInfrastructureStack
 import uuid
 from lib.custom_constructs.config_construct import ConfigConstruct
@@ -29,7 +29,7 @@ class TestMainInfrastructureStack(unittest.TestCase):
  
     
     def setUp(self):
-        self.app = core.App()
+        self.app = cdk.App()
         self.stack = MainInfrastructureStack(self.app, "TestStack")
         self.stack_creation_test = self.test_stack_creation()
         unique_id =  str(uuid.uuid4())  # Generate a unique ID
@@ -55,14 +55,14 @@ if __name__ == '__main__':
     unittest.main()
 
 import unittest
-from aws_cdk import core
+import aws_cdk as cdk
 from lib.main_infrastructure import MainInfrastructureStack
 from lib.custom_constructs.config_construct import ConfigConstruct
 
 class TestMainInfrastructureStack(unittest.TestCase):
 
     def setUp(self):
-        self.app = core.App()
+        self.app = cdk.App()
         self.stack = MainInfrastructureStack(self.app, "TestStack")
 
     def test_stack_creation(self):
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     unittest.main()
     
 import unittest
-from aws_cdk import core
+import aws_cdk as cdk
 from lib.main_infrastructure import MainInfrastructureStack
 from lib.custom_constructs.config_construct import ConfigConstruct
 import uuid
@@ -115,7 +115,7 @@ import yaml
 class TestMainInfrastructureStack(unittest.TestCase):
 
     def setUp(self):
-        self.app = core.App()
+        self.app = cdk.App()
         self.stack = MainInfrastructureStack(self.app, "TestStack")
 
     def test_stack_creation(self):

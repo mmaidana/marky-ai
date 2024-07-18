@@ -1,13 +1,13 @@
 import unittest
 from lib.consumers.niche_finder import NicheFinder
 import unittest
-from aws_cdk import core
+import aws_cdk as cdk
 from lib.consumers.niche_finder import NicheFinderStack
 
 class TestNicheFinderStack(unittest.TestCase):
 
     def setUp(self):
-        app = core.App()
+        app = cdk.App()
         self.stack = NicheFinderStack(app, "TestStack")
 
     def test_stack_creation(self):
@@ -45,13 +45,13 @@ if __name__ == '__main__':
     unittest.main()
     
 import unittest
-from aws_cdk import core
+import aws_cdk as cdk
 from lib.consumers.niche_finder import NicheFinderStack
 
 class TestNicheFinderStack(unittest.TestCase):
 
     def setUp(self):
-        app = core.App()
+        app = cdk.App()
         self.stack = NicheFinderStack(app, "TestStack")
 
     def test_stack_creation(self):
