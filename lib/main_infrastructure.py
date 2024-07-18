@@ -12,12 +12,11 @@ from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_iam as iam
 import yaml
 from aws_cdk import aws_sns_subscriptions as subscriptions
-from datetime import datetime
 import logging
-import os
 import uuid
 from aws_cdk import aws_logs as logs
 from .custom_constructs.config_construct import ConfigConstruct
+from aws_cdk import aws_sns_subscriptions as subscriptions
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -132,6 +131,18 @@ class MainInfrastructureStack(cdk.Stack):
 
         # Return the dictionary of created SNS topics
         return sns_topics
+    
+
+        #     # SNS Subscriptions for notifications
+        # Subscription(self, "PhoneSubscription",
+        #              topic=niche_finder_topic,
+        #              protocol=SubscriptionProtocol.SMS,
+        #              endpoint=config_data["phone_number"])  # Required
+
+        # Subscription(self, "EmailSubscription",
+        #              topic=niche_finder_topic,
+        #              protocol=SubscriptionProtocol.EMAIL,
+        #              endpoint=config_data["email_address"])  # Required
     
     def _create_sqs_queues(self, config_data, unique_id):
         queue_configs = config_data.get_value('queue_configs', {})
