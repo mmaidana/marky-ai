@@ -16,19 +16,12 @@ import boto3  # Import boto3 for AWS interactions
 def nicheFinder(event, context):
 
     # Retrieve configuration from environment variables
-    s3_bucket_name = os.environ["S3_BUCKET_NAME"]
-    sqs_queue_url = os.environ["SQS_QUEUE_URL"]
-    sns_topic_arn = os.environ["SNS_TOPIC_ARN"]
-    phone_number = os.environ["SNS_PHONE_NUMBER"]
-    email_address = os.environ["SNS_EMAIL_ADDRESS"]
-
-    # Access prompt and config file names from event (if applicable)
-    prompt_file_name = None
-    config_file_name = None
-    if event.get("prompt_file"):
-        prompt_file_name = event["prompt_file"]
-    if event.get("config_file"):
-        config_file_name = event["config_file"]
+    s3_bucket_name = os.environ["NICHE_FINDER_S3_BUCKET_NAME"]
+    sqs_queue_url = os.environ["NICHE_FINDER_SQS_QUEUE_URL"]
+    sns_topic_arn = os.environ["NICHE_FINDER_SNS_TOPIC_ARN"]
+    phone_number = os.environ["NICHE_FINDER_SNS_PHONE_NUMBER"]
+    email_address = os.environ["NICHE_FINDER_SNS_EMAIL_ADDRESS"]
+    prompt_data = os.environ["NICHE_FINDER_PROMPT_DATA"]
 
     # Your Lambda function logic here (using prompt_file_name, config_data)
     # ...

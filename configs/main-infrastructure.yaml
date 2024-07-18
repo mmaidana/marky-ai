@@ -2,49 +2,49 @@
 
 #bucket names
 bucket_names:
-  stream_bucket: "stream-bucket"
-  niche-finder: "niche-finder" 
-  affiliate_program: "affiliate-program"
-  subscription_service_cost: "subscription-service-cost"
-  campaign: "campaign"
-  campaign_content: "campaign-content"
-  campaign_metrics: "campaign-metrics"
+  data-stream-bucket: "data-stream-bucket"
+  niche-finder-bucket: "niche-finder-bucket" 
+  affiliate-program-bucket: "affiliate-program-bucket"
+  sub-service-cost-bucket: "sub-service-cost-bucket"
+  campaign-bucket: "campaign-bucket"
+  campaign-content-bucket: "campaign-content-bucket"
+  campaign-metrics-bucket: "campaign-metrics-bucket"
 
 
 #table names
 table_names:
-  niche-finder: "niche-finder" 
-  affiliate_program: "affiliate-program"
-  subscription_service_cost: "subscription-service-cost"
-  campaign: "campaign"
-  campaign_content: "campaign-content"
-  campaign_metrics: "campaign-metrics"
+  niche-finder-table: "niche-finder-table" 
+  affiliate-program-table: "affiliate-program-table"
+  sub-service-cost-table: "sub-service-cost-table"
+  campaign-table: "campaign-table"
+  campaign_content-table: "campaign-content-table"
+  campaign_metrics-table: "campaign-metrics-table"
 
 #topic names
 topic_names:
-  niche-finder: "niche-finder"
-  affiliate_program: "affiliate-program"
-  campaign: "campaign"
-  campaign_content: "campaign-content"
-  campaign_metrics: "campaign-metrics"
+  niche-finder-topic: "niche-finder-topic"
+  affiliate-program-topic: "affiliate-program-topic"
+  campaign-topic: "campaign-topic"
+  campaign-content-topic: "campaign-content-topic"
+  campaign-metrics-topic: "campaign-metrics-topic"
 
 #Queue Configs
 queue_configs:
-  niche-finder:
-    name: niche-finder
+  niche-finder-queue:
+    name: niche-finder-queue
     visibility_timeout: 300
-  affiliate_program:
-    name: affiliate-program
+  affiliate-program-queue:
+    name: affiliate-program-queue
     visibility_timeout: 300
-  campaign:
-    name: campaign
+  campaign-queue:
+    name: campaign-queue
     visibility_timeout: 300
-  campaign_content:
-    name: campaign-content
+  campaign-content-queue:
+    name: campaign-content-queue
     visibility_timeout: 300
-  campaign_metrics:
-    name: campaign-metrics
+  campaign-metrics-queue:
+    name: campaign-metrics-queue
     visibility_timeout: 300
 
 #data stream names
-data_stream_name: "data-stream"
+data-stream-name: "data-stream"

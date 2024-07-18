@@ -2,15 +2,18 @@
 import os
 
 import aws_cdk as cdk
-
-#from ai_marketing_gen_stack import AiMarketingGenStack
 from lib.main_infrastructure import MainInfrastructureStack
+from lib.shared_constructs.mediator import MediatorStack as MediatorStackClass  # Renamed to avoid naming conflict
+from lib.consumers.niche_finder import NicheFinderStack
+
 
 app = cdk.App()
 
+# Instantiate stacks
+main_infrastructure_stack = MainInfrastructureStack(app, "MainInfrastructureStack")  # MainInfrastructureStack(app, "MainInfrastructureStack", config_data)
+mediator_stack = MediatorStackClass(app, "MediatorStack")  # Instantiate the MediatorStack
+niche_finder_stack = NicheFinderStack(app, "NicheFinderStack",mediator_stack=mediator_stack)  # NicheFinderStack(app, "NicheFinderStack", config_data)
 
-# Correctly instantiate stacks
-#AiMarketingGenStack(app, "ai-marketing-gen-stack")
-MainInfrastructureStack(app, "lib/main-infrastructure")
+
 
 app.synth()

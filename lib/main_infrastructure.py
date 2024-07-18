@@ -1,6 +1,7 @@
 import aws_cdk as cdk
 from constructs import Construct
-from aws_cdk import aws_sns as sns
+from aws_cdk import aws_sns as sns 
+from aws_cdk.aws_sns import Subscription,  SubscriptionProtocol
 from aws_cdk import aws_sqs as sqs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_dynamodb as dynamodb
@@ -31,28 +32,29 @@ class MainInfrastructureStack(cdk.Stack):
         try:
             # Loading Config Data
             config_data = ConfigConstruct(self, "MainInfrastructureConfig", config_file_path="configs/main-infrastructure.yaml") 
-            # ... create S3 buckets, DynamoDB tables, etc. using bucket_names and table_names
+            shared_config_data = ConfigConstruct(self, "SharedConfig", config_file_path="configs/shared-data.yaml")
 
+            # ... create S3 buckets, DynamoDB tables, etc. using bucket_names and table_names from config_data ...
             unique_id = str(uuid.uuid4())  # Generate a unique ID
             self.data_stream_name = config_data.get_value("data_stream_name") # Get the data stream name from the config file
 
             # Access the 'bucket_names' dictionary and then the 'stream_bucket' value
             bucket_names = config_data.get_value('bucket_names')
-            s3_stream_bucket_name = bucket_names.get('stream_bucket')
+            s3_stream_bucket_name = bucket_names.get('data-stream-bucket')
             self.s3_stream_bucket = s3.Bucket.from_bucket_name(self, "BucketById",  s3_stream_bucket_name) # Get the S3 bucket name from the config file
 
             # Create S3 Buckets
             s3_buckets = self._create_s3_buckets(config_data, unique_id)
             
             # Create SNS Topics and SQS Queues
-            sns_topics = self._create_sns_topics(config_data, unique_id)
+            sns_topics = self._create_sns_topics(config_data, unique_id, shared_config_data)
             sqs_queues = self._create_sqs_queues(config_data, unique_id)
 
             # Subscribe queues to topics
             self._subscribe_queues_to_topics(sns_topics, sqs_queues)
 
             # Create Kinesis Data Stream for DynamoDB Change Data Capture (CDC)
-            data_stream = self._create_data_stream(config_data) 
+            #data_stream = self._create_data_stream(config_data) 
 
             # Create IAM role for Firehose
             firehose_role = self._create_firehose_role()
@@ -67,7 +69,7 @@ class MainInfrastructureStack(cdk.Stack):
             lambda_processor = self._create_lambda_processor(config_data,process_dynamodb_update, tables)        
         
             # Create Firehose delivery streams
-            firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
+            #firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
 
             # Add tags to all resources for easy identification
             cdk.Tags.of(self).add("Key", "Value")
@@ -108,7 +110,7 @@ class MainInfrastructureStack(cdk.Stack):
 
         return s3_buckets
             
-    def _create_sns_topics(self, config_data, unique_id):
+    def _create_sns_topics(self, config_data, unique_id, shared_config_data):
         # Retrieve topic names from config_data, defaulting to an empty dictionary if not found
         topic_names = config_data.get_value('topic_names', {})
         sns_topics = {}
@@ -126,23 +128,19 @@ class MainInfrastructureStack(cdk.Stack):
                 unique_topic_name = f"{topic_name}-{unique_id}" # Append unique ID to topic name
                 # Create an SNS topic with the specified name and display name, and store it in the sns_topics dictionary
                 sns_topics[topic_name] = sns.Topic(self, id=unique_topic_name, display_name=topic_display_name)
+                Subscription(self, f"EmailSubscription-{topic_name}",
+                             topic=sns_topics[topic_name],
+                             protocol=SubscriptionProtocol.EMAIL,
+                             endpoint=shared_config_data["subscription-email-address"])  # Required
+                Subscription(self, f"PhoneSubscription-{topic_name}",
+                             topic=sns_topics[topic_name],
+                             protocol=SubscriptionProtocol.SMS,
+                             endpoint=shared_config_data["subscription-phone-number"])  # Required
             except Exception as e:
                 print(f"Failed to create SNS topic '{topic_name}': {e}")
 
         # Return the dictionary of created SNS topics
         return sns_topics
-    
-
-        #     # SNS Subscriptions for notifications
-        # Subscription(self, "PhoneSubscription",
-        #              topic=niche_finder_topic,
-        #              protocol=SubscriptionProtocol.SMS,
-        #              endpoint=config_data["phone_number"])  # Required
-
-        # Subscription(self, "EmailSubscription",
-        #              topic=niche_finder_topic,
-        #              protocol=SubscriptionProtocol.EMAIL,
-        #              endpoint=config_data["email_address"])  # Required
     
     def _create_sqs_queues(self, config_data, unique_id):
         queue_configs = config_data.get_value('queue_configs', {})
@@ -172,13 +170,24 @@ class MainInfrastructureStack(cdk.Stack):
     # Create Subscribe Queues to Topics Method
     def _subscribe_queues_to_topics(self, sns_topics, sqs_queues):
         for topic_name, topic in sns_topics.items():
-            try:
-                queue_name = topic_name  # Assuming topic and queue names match
-                queue = sqs_queues.get(queue_name)
-                if queue:
-                    topic.add_subscription(subscriptions.SqsSubscription(queue))
-            except Exception as e:
-                print(f"Failed to subscribe queue '{queue_name}' to topic '{topic_name}': {e}")
+            # Extract the relevant part of the topic name (modify based on your pattern)
+            queue_name_prefix = topic_name.split("-")[0]  # Assuming "-" separates topic and queue names
+
+            # Find the queue that starts with the extracted prefix
+            for queue_name, queue in sqs_queues.items():
+                if queue_name.startswith(queue_name_prefix):
+                    try:
+                        topic.add_subscription(subscriptions.SqsSubscription(queue))
+                        #print(f"Subscribed queue '{queue_name}' to topic '{topic_name}'")
+                        break  # Exit inner loop once a matching queue is found
+                    except Exception as e:
+                        print(f"Failed to subscribe queue '{queue_name}' to topic '{topic_name}': {e}")
+                        continue  # Continue the inner loop to find another matching queue
+
+            # Handle scenario where no matching queue is found for the topic
+            else:
+                print(f"No queue found for topic '{topic_name}' with prefix '{queue_name_prefix}'")
+
 
     # Create DynamoDB Tables Method
     def _create_dynamodb_tables(self, config_data, firehose_role, unique_id):
