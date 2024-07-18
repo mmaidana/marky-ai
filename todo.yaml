@@ -1,0 +1,8 @@
+#Things to do in the project
+
+Create scalable and modular folder structure #done
+Add Logging
+Add Error Handling #done
+Add Unit Tests
+move lambda iam roles from consumers/ to infra/ 
+add phone numbers and emails to all subscriptions

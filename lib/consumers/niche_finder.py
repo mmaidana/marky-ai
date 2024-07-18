@@ -73,25 +73,6 @@ class AiMarketingGenStack(cdk.Stack):
             iam.ManagedPolicy.from_aws_managed_policy_name("AmazonTextractFullAccess")  # Corrected policy name
         )
 
-        # S3 Bucket for results
-        niche_finder_results_bucket = Bucket(self, "NicheFinderResultsBucket",
-                                             bucket_name=config_data["s3_bucket_name"], versioned=True)
-
-        # SQS Queue for notifications
-        niche_finder_queue = Queue(self, "NicheFinderQueue",
-                                   queue_name=config_data["sqs_queue_name"],
-                                   visibility_timeout=cdk.Duration.seconds(int(config_data["visibility_timeout"])))
-
-        # SNS Topic for notifications
-        niche_finder_topic = Topic(self, "NicheFinderNotificationTopic",
-                                    topic_name=get_topic_name_from_config(config_data))  # Placeholder implementation
-        
-        # Subscribe Queues to Topics
-        #Assuming niche_finder_topic is an instance of sns.Topic
-        #and niche_finder_queue is an instance of sqs.Queue
-
-        niche_finder_topic.add_subscription(subscriptions.SqsSubscription(niche_finder_queue))
-
         # Lambda function (receive prompt and config file names as parameters)
         lambda_fn = Function(self, "NicheFinderLambda",
                              runtime=Runtime.PYTHON_3_9,
