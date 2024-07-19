@@ -15,7 +15,6 @@ from aws_cdk import aws_sns_subscriptions as subscriptions
 import logging
 import uuid
 from .custom_constructs.config_construct import ConfigConstruct
-from aws_cdk import aws_sns_subscriptions as subscriptions
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -93,20 +92,47 @@ class MainInfrastructureStack(cdk.Stack):
         s3_buckets = {}
 
         for bucket_name, actual_bucket_name in bucket_names.items():
+            unique_bucket_name = self._generate_unique_resource_name(actual_bucket_name, unique_id)
             try:
-                 # Append a UUID to the actual bucket name to ensure uniqueness
-                unique_bucket_name = f"{actual_bucket_name}-{unique_id}"
-                s3_bucket = s3.Bucket(
-                    self, bucket_name,
-                    bucket_name=unique_bucket_name,
-                    encryption=s3.BucketEncryption.KMS_MANAGED,
-                    removal_policy=cdk.RemovalPolicy.DESTROY
-                )
+                s3_bucket = self._create_single_s3_bucket(bucket_name, unique_bucket_name)
                 s3_buckets[bucket_name] = s3_bucket
             except Exception as e:
-                print(f"Failed to create bucket {bucket_name}: {e}")
+                self._handle_bucket_creation_error(bucket_name, e)
 
         return s3_buckets
+    
+    # Generate Unique Resource Name Method
+    def _generate_unique_resource_name(self, base_name, unique_id):
+        """
+        Generates a unique name for any resource by appending a unique ID.
+
+        Parameters:
+        - base_name: The base name of the resource.
+        - unique_id: A unique identifier to ensure the resource name is unique.
+
+        Returns:
+        A string representing the unique resource name.
+        """
+        try:
+            return f"{base_name}-{unique_id}"
+        except Exception as e:
+            print(f"Error generating unique name for {base_name}: {e}")
+            return None
+
+    def _create_single_s3_bucket(self, bucket_name, unique_bucket_name):
+        try:
+            return s3.Bucket(
+                self, bucket_name,
+                bucket_name=unique_bucket_name,
+                encryption=s3.BucketEncryption.KMS_MANAGED,
+                removal_policy=cdk.RemovalPolicy.DESTROY
+            )
+        except Exception as e:
+            print(f"Error creating S3 bucket {bucket_name}: {e}")
+            return None
+
+    def _handle_bucket_creation_error(self, bucket_name, error):
+        print(f"Failed to create bucket {bucket_name}: {error}")
             
     def _create_sns_topics(self, config_data, unique_id, shared_config_data):
         # Retrieve topic names from config_data, defaulting to an empty dictionary if not found
@@ -123,7 +149,7 @@ class MainInfrastructureStack(cdk.Stack):
                     # Provide a clear error message indicating the expected type and the actual type received
                     raise ValueError(f"Display name for topic '{topic_name}' must be a string, got {type(topic_display_name).__name__}")
 
-                unique_topic_name = f"{topic_name}-{unique_id}" # Append unique ID to topic name
+                unique_topic_name = self._generate_unique_resource_name(topic_name, unique_id) #f"{topic_name}-{unique_id}" # Append unique ID to topic name
                 # Create an SNS topic with the specified name and display name, and store it in the sns_topics dictionary
                 sns_topics[topic_name] = sns.Topic(self, id=unique_topic_name, display_name=topic_display_name)
                 Subscription(self, f"EmailSubscription-{topic_name}",
@@ -147,7 +173,7 @@ class MainInfrastructureStack(cdk.Stack):
         for queue_name, queue_config in queue_configs.items():
             try:
                 # Ensure unique names by appending a suffix or modifying the naming strategy
-                unique_queue_name = f"{queue_name}-queue-{unique_id}"  # Example modification
+                unique_queue_name = self._generate_unique_resource_name(f"{queue_name}-queue", unique_id) #f"{queue_name}-queue-{unique_id}"  # Example modification
 
                 # Check if the unique name already exists to avoid conflicts
                 if unique_queue_name in self.node.children:
@@ -194,7 +220,7 @@ class MainInfrastructureStack(cdk.Stack):
         for table_name, table_config in table_names.items():
             try:
                 # Corrected string formatting for table name
-                corrected_table_name = f"{table_name}-{unique_id}"
+                corrected_table_name = self._generate_unique_resource_name(table_name, unique_id) #f"{table_name}-{unique_id}"
                 # Ensure the construct ID is unique within the stack
                 construct_id = f"{corrected_table_name}-{unique_id}"
                 table = dynamodb.Table(
@@ -305,75 +331,83 @@ class MainInfrastructureStack(cdk.Stack):
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             return None
 
-    
     def _create_firehose_delivery_streams(self, firehose_role, lambda_processor, data_stream_name, s3_bucket, table_names, unique_id, get_timestamp_function):
-        
-        # Initialize a counter for unique name generation
-        counter = 1
-    
         delivery_stream_names = [data_stream_name] + [f"{name}-firehose" for name in table_names]
         firehose_streams = {}
 
-        # Grant Firehose permission to invoke Lambda functions
-        def _grant_firehose_invoke_lambda_permission(firehose_role, get_timestamp_function):
-            try:
-                firehose_role.add_to_policy(
-                    statement=iam.PolicyStatement(
-                        actions=["lambda:InvokeFunction"],
-                        resources=[get_timestamp_function.function_arn],
-                    )
-                )
-            except Exception as e:
-                print(f"Failed to grant Firehose invoke permission to Lambda function: {e}")
-
         for name in delivery_stream_names:
-            # Append a counter to ensure uniqueness
             unique_delivery_stream_name = f"{name}-{unique_id}"
-            counter += 1
-    
-            # Directly use the table name for the prefix if available, else use a default
-            prefix = f"dynamodb-changes/{name.split('-')[0]}/" if '-' in name else "dynamodb-changes/default/"
-    
+            prefix = self._determine_prefix(name, data_stream_name)
             if lambda_processor and lambda_processor.function_arn:
                 try:
-                    firehose_stream = firehose.CfnDeliveryStream(
-                        self,
-                        unique_delivery_stream_name,
-                        delivery_stream_type="DirectPut",
-                        extended_s3_destination_configuration=firehose.CfnDeliveryStream.ExtendedS3DestinationConfigurationProperty(
-                            bucket_arn=s3_bucket.bucket_arn,
-                            prefix=prefix,  # Use table name from delivery stream name
-                            compression_format="GZIP",
-                            role_arn=firehose_role.role_arn,
-                            processing_configuration=firehose.CfnDeliveryStream.ProcessingConfigurationProperty(
-                                enabled=True,
-                                processors=[
-                                    firehose.CfnDeliveryStream.ProcessorProperty(
-                                        type="Lambda",
-                                        parameters=[
-                                            firehose.CfnDeliveryStream.ProcessorParameterProperty(
-                                                parameter_name="LambdaArn",
-                                                parameter_value=lambda_processor.function_arn
-                                            ),
-                                        ] + ([
-                                            firehose.CfnDeliveryStream.ProcessorParameterProperty(
-                                                parameter_name="BufferSizeInMBs",
-                                                parameter_value="3"
-                                            ),
-                                            firehose.CfnDeliveryStream.ProcessorParameterProperty(
-                                                parameter_name="BufferIntervalInSeconds",
-                                                parameter_value="60"
-                                            )
-                                        ] if name == data_stream_name else [])
-                                    )
-                                ]
-                            )
-                        ),
-                    )
+                    firehose_stream = self._create_delivery_stream(unique_delivery_stream_name, prefix, s3_bucket, firehose_role, lambda_processor)
                     firehose_streams[unique_delivery_stream_name] = firehose_stream
-                    _grant_firehose_invoke_lambda_permission(firehose_role, get_timestamp_function)
+                    self._grant_firehose_invoke_lambda_permission(firehose_role, get_timestamp_function)
                 except Exception as e:
                     print(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': {e}")
             else:
                 print(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': Lambda processor is None or its function_arn is not available")
         return firehose_streams
+
+    def _determine_prefix(self, name, data_stream_name):
+        try:
+            return f"dynamodb-changes/{name.split('-')[0]}/" if '-' in name else "dynamodb-changes/default/"
+        except Exception as e:
+            print(f"Error determining prefix for {name}: {e}")
+            return "dynamodb-changes/error/"
+
+    def _create_delivery_stream(self, unique_delivery_stream_name, prefix, s3_bucket, firehose_role, lambda_processor):
+        try:
+            return firehose.CfnDeliveryStream(
+                self,
+                unique_delivery_stream_name,
+                delivery_stream_type="DirectPut",
+                extended_s3_destination_configuration=firehose.CfnDeliveryStream.ExtendedS3DestinationConfigurationProperty(
+                    bucket_arn=s3_bucket.bucket_arn,
+                    prefix=prefix,
+                    compression_format="GZIP",
+                    role_arn=firehose_role.role_arn,
+                    processing_configuration=self._create_processing_configuration(lambda_processor, unique_delivery_stream_name)
+                ),
+            )
+        except Exception as e:
+            print(f"Error creating delivery stream {unique_delivery_stream_name}: {e}")
+            return None
+
+    def _create_processing_configuration(self, lambda_processor, stream_name):
+        try:
+            base_parameters = [
+                firehose.CfnDeliveryStream.ProcessorParameterProperty(
+                    parameter_name="LambdaArn",
+                    parameter_value=lambda_processor.function_arn
+                )
+            ]
+            if stream_name.endswith("-1"):  # Assuming the first stream requires additional parameters
+                base_parameters += [
+                    firehose.CfnDeliveryStream.ProcessorParameterProperty(
+                        parameter_name="BufferSizeInMBs",
+                        parameter_value="3"
+                    ),
+                    firehose.CfnDeliveryStream.ProcessorParameterProperty(
+                        parameter_name="BufferIntervalInSeconds",
+                        parameter_value="60"
+                    )
+                ]
+            return firehose.CfnDeliveryStream.ProcessingConfigurationProperty(
+                enabled=True,
+                processors=[firehose.CfnDeliveryStream.ProcessorProperty(type="Lambda", parameters=base_parameters)]
+            )
+        except Exception as e:
+            print(f"Error creating processing configuration for {stream_name}: {e}")
+            return firehose.CfnDeliveryStream.ProcessingConfigurationProperty(enabled=False)
+
+    def _grant_firehose_invoke_lambda_permission(self, firehose_role, get_timestamp_function):
+        try:
+            firehose_role.add_to_policy(
+                statement=iam.PolicyStatement(
+                    actions=["lambda:InvokeFunction"],
+                    resources=[get_timestamp_function.function_arn],
+                )
+            )
+        except Exception as e:
+            print(f"Failed to grant Firehose invoke permission to Lambda function: {e}")
