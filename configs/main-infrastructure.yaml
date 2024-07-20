@@ -4,11 +4,11 @@
 bucket_names:
   data-stream-bucket: "data-stream-bucket"
   niche-finder-bucket: "niche-finder-bucket" 
-  affiliate_program-bucket: "affiliate_program-bucket"
+  affiliate-program-bucket: "affiliate-program-bucket"
   sub-service-cost-_bucket: "sub-service-cost-bucket"
   campaign-bucket: "campaign-bucket"
-  campaign_content-bucket: "campaign_content-bucket"
-  campaign_metrics-bucket: "campaign_metrics-bucket"
+  campaign-content-bucket: "campaign-content-bucket"
+  campaign-metrics-bucket: "campaign-metrics-bucket"
 
 
 # Table names
