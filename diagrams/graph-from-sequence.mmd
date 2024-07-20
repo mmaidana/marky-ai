@@ -1,0 +1,29 @@
+graph LR
+A[Step 1: Get Niche] -->|CronJob Call Lambda every hour|B
+B[Niche Lambda] -->|Add Query to Queue| C
+C[Niche SQS] -->|Queue Empty?| D(Process Niche Queue)
+D -->|Queue is being processed| B
+B -->|Get list of niches| E(Gemini AI)
+E -->|Get Results| F[Lambda Processor]
+F -->|First Time?| $First$(Lambda Settler)
+$First$ --> |Save Brand New File to Bucket|H(Niche S3 Bucket)
+$First$ -->|Create Niche Repo| I(Github)
+$First$ -->|Commit file to Repo| I
+$First$ -->|Add Niche/s to Database| K(Niche DynamoDB)
+$First$ -->|Notify - File Created| L(Marketeer)
+$First$ -->|Trigger Step 2| M[Step 2: Get Affiliate Program]
+F -->|else| N(Lambda Parser)
+N -->|Create Branch| I
+N -->|Save File to Bucket with New Niche| H
+N -->|Commit File to Branch| I
+N -->|Parser Review Results| O(Lambda Reviewer)
+O -->|New Niche?| $NewNiche$(Notify Marketeer)
+$NewNiche$ --> L
+L -->|Review Results| I
+I -->|Validate Results| $AcceptResults$(Accept Results)
+$AcceptResults$ --> L
+L -->|Merge Branch| I
+I -->|Github Actions call Parser| N
+N -->|Add Niche to Database| K
+N -->|Trigger Step 2| M
+M -->|Process Next Item in Niche Queue| D

@@ -6,18 +6,22 @@ sequenceDiagram
     participant Github
     participant Database
     participant Marketeer
+    participant Affiliate Lambda
     activate Niche Queue
     Lambda->>Niche Queue: Add Query to Queue
+
     alt Queue Empty?
         Lambda->>Niche Queue: Process queue
         Lambda->>Gemini AI: Get list of niches
         Lambda->>Lambda: Get Results
+
         alt First Time?
             Lambda->>Parser: Save results to S3
             Lambda->>Github: Create Niche Repo
             Lambda->>Github: Commit file to Repo
             Lambda->>Database: Add Niche/s to Database
             Lambda->>Marketeer: Notify - File Created
+            Lambda->>Affiliate Lambda: Trigger Step 2
         else
             Lambda->>Parser: Trigger Parser
             Lambda->>Github: Create Branch
@@ -26,15 +30,19 @@ sequenceDiagram
             activate Marketeer
             Marketeer->>Lambda: Review Results
             deactivate Marketeer
+
             alt New Niche?
                 Marketeer->>Github: Create Git PR
                 Marketeer->>Github: Merge branch to main branch
                 Github->>Database: Github Actions Add Niche to Database
+                Lambda->>Affiliate Lambda: Trigger Step 2
             else
                 Note right of Lambda: No action required
             end
+
         end
-        Lambda->>Lambda: Trigger Step 2
+
+        
         else
         Niche Queue->>Lambda: Wait for empty queue
         deactivate Niche Queue
