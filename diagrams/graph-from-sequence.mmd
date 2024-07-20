@@ -1,4 +1,5 @@
 graph LR
+
 A[Step 1: Get Niche] -->|CronJob Call Lambda every hour|B
 B[Niche Lambda] -->|Add Query to Queue| C
 C[Niche SQS] -->|Queue Empty?| D(Process Niche Queue)
@@ -31,10 +32,10 @@ I -->|Github Actions call Parser| N
 N -->|Add Niche to Database| K
 N -->|Trigger Step 2| M
 M -->|Process Next Item in Niche Queue| D
-M -->|Get Unprocessed Niches from DB| K
-M -->|Call Affilliate Lambda| P[Affilliate Lambda]
-P -->|Add Query to Queue| Q[Affiliate SQS]
-Q -->|Queue Empty?| R(Process Affilliate Queue)
-R -->|Queue is being processed| P
-P -->|Get best affilliate programs| E(Gemini AI)
-E -->|Get Results| S[Affliate Lambda Processor]
+%%M -->|Get Unprocessed Niches from DB| K
+%%M -->|Call Affilliate Lambda| P[Affilliate Lambda]
+%%P -->|Add Query to Queue| Q[Affiliate SQS]
+%%Q -->|Queue Empty?| R(Process Affilliate Queue)
+%%R -->|Queue is being processed| P
+%%P -->|Get best affilliate programs| E(Gemini AI)
+%%E -->|Get Results| S[Affliate Lambda Processor]
