@@ -10,4 +10,9 @@ destroy firehose
 share constructs between stacks #done
 check sns-sqs subscriptions #done
 do high level flow diagram 
+add ai layer to diagram for interactions
 connect to google ai
+create CI/CD 
+create environments,
+create test cases, 
+create promotions and gating
