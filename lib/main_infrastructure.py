@@ -95,7 +95,7 @@ class MainInfrastructureStack(cdk.Stack):
         
             # Create Firehose delivery streams
             logger.info("Creating Firehose Delivery Streams (Disabled)")
-            firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
+            #firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
             end_logger = common_stack._end_logger(StackName=StackName)
 
         except FileNotFoundError as e:
