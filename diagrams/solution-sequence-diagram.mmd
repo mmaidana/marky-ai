@@ -1,40 +1,41 @@
 sequenceDiagram
-    participant Marketeer
-    participant Lambda  
-    participant Gemini AI API
+    participant Lambda
+    participant Gemini AI
     participant Niche Queue
     participant Parser
-    participant Database
-    participant Bucket
     participant Github
-    participant Niche Processor
-   Lambda->>Gemini AI: Get list of niches
+    participant Database
+    participant Marketeer
     activate Niche Queue
+    Lambda->>Niche Queue: Add Query to Queue
     alt Queue Empty?
-        deactivate Niche Queue
-       Lambda->>Niche Queue: Process queue
-       Lambda(Get Results)
-    else
-        Niche Queue->>Lambda: Wait for empty queue
-    endif
-    deactivate Niche Queue
-   Lambda(Get Results)
-    alt First Time?
-       Lambda->>Niche Processor: Save results to S3
-       Lambda->>Marketeer: Notify - File Created
-    else
-       Lambda->>Parser: Trigger Parser
-       Lambda->>Marketeer: Notify - File Created
-        activate Marketeer
-        Marketeer->>Lambda: Review Results
-        deactivate Marketeer
-        alt New Niche?
-            Marketeer->>Lambda: Create Git PR
-           Lambda->>Database: Merge branch to main
-           Lambda->>Database: Add Niche to Database
+        Lambda->>Niche Queue: Process queue
+        Lambda->>Gemini AI: Get list of niches
+        Lambda->>Lambda: Get Results
+        alt First Time?
+            Lambda->>Parser: Save results to S3
+            Lambda->>Github: Create Niche Repo
+            Lambda->>Github: Commit file to Repo
+            Lambda->>Database: Add Niche/s to Database
+            Lambda->>Marketeer: Notify - File Created
         else
-            // No action
-        endif
-    endif
-   Lambda->>Marketeer: Notify - New Addition
-   Lambda->>Lambda(Trigger Step 2)
+            Lambda->>Parser: Trigger Parser
+            Lambda->>Github: Create Branch
+            Lambda->>Github: Commit File to Branch
+            Lambda->>Marketeer: Notify - Niche Added
+            activate Marketeer
+            Marketeer->>Lambda: Review Results
+            deactivate Marketeer
+            alt New Niche?
+                Marketeer->>Github: Create Git PR
+                Marketeer->>Github: Merge branch to main branch
+                Github->>Database: Github Actions Add Niche to Database
+            else
+                Note right of Lambda: No action required
+            end
+        end
+        Lambda->>Lambda: Trigger Step 2
+        else
+        Niche Queue->>Lambda: Wait for empty queue
+        deactivate Niche Queue
+    end  
