@@ -42,7 +42,7 @@ class MainInfrastructureStack(cdk.Stack):
 
             # Define the log group for infrastructure deployment logs
             logger.info("Creating log group for infrastructure deployment logs")
-            log_group = common_stack._create_log_group(log_group_name, StackName= StackName) 
+            self.log_group = common_stack._create_log_group(log_group_name, StackName= StackName) 
 
             shared_config_data = ConfigConstruct(self, "SharedConfig", config_file_path="configs/shared-data.yaml")
             logger.info("Shared Configuration data loaded successfully in MainInfrastructureStack")
@@ -95,7 +95,7 @@ class MainInfrastructureStack(cdk.Stack):
         
             # Create Firehose delivery streams
             logger.info("Creating Firehose Delivery Streams (Disabled)")
-            #firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
+            firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
             end_logger = common_stack._end_logger(StackName=StackName)
 
         except FileNotFoundError as e:
@@ -219,7 +219,7 @@ class MainInfrastructureStack(cdk.Stack):
         for queue_name, queue_config in queue_configs.items():
             try:
                 # Ensure unique names by appending a suffix or modifying the naming strategy
-                unique_queue_name = self._generate_unique_resource_name(f"{queue_name}-queue", unique_id) #f"{queue_name}-queue-{unique_id}"  # Example modification
+                unique_queue_name = self._generate_unique_resource_name(queue_name, unique_id) #f"{queue_name}-queue-{unique_id}"  # Example modification
 
                 # Check if the unique name already exists to avoid conflicts
                 if unique_queue_name in self.node.children:
@@ -299,6 +299,7 @@ class MainInfrastructureStack(cdk.Stack):
                 shard_count=1,  # Adjust shard count as needed
                 removal_policy=cdk.RemovalPolicy.DESTROY
             )
+            self.logger.info(f"Created Kinesis Data Stream '{data_stream_name}'")
             return data_stream
         except Exception as e:
             self.logger.error(f"Failed to create Kinesis Data Stream: {e}")
@@ -317,6 +318,7 @@ class MainInfrastructureStack(cdk.Stack):
                     iam.ManagedPolicy.from_aws_managed_policy_name("AWSLambdaExecute")  # Only add if necessary for your use case
                 ]
             )
+            self.logger.info("Created Firehose role")
             return firehose_role
         except Exception as e:
             self.logger.error(f"Failed to create Firehose role: {e}")
@@ -331,13 +333,14 @@ class MainInfrastructureStack(cdk.Stack):
                 "process-dynamodb-update",
                 runtime=lambda_.Runtime.PYTHON_3_9,
                 handler="process_dynamodb_update.handler",  # Adjust the handler accordingly
-                code=lambda_.Code.from_asset("lambda_handler/infrastructure/process_update")
-                #log_group=infra_deployment_log_group
+                code=lambda_.Code.from_asset("lambda_handler/infrastructure/process_update"),
+                log_group=self.log_group
                 #environment={
                 #    "TABLE_NAMES": json.dumps(table_names),  # Pass table names to Lambda function
                 # Other environment variables if needed
                 #}
             )
+            self.logger.info("Created process update Lambda function")
             return process_dynamodb_update
         except Exception as e:
             self.logger.error(f"Failed to create process update Lambda function: {e}")
@@ -353,7 +356,10 @@ class MainInfrastructureStack(cdk.Stack):
                 runtime=lambda_.Runtime.PYTHON_3_9,
                 code=lambda_.Code.from_asset("lambda_handler/infrastructure/get_timestamp"),
                 handler="get_timestamp.handler",
+                log_group=self.log_group
+
             )
+            self.logger.info("Created get timestamp Lambda function")
             return get_timestamp_function
         except Exception as e:
             self.logger.error(f"Failed to create get timestamp Lambda function: {e}")
@@ -369,9 +375,11 @@ class MainInfrastructureStack(cdk.Stack):
                 self, "LambdaProcessor", process_dynamodb_update.function_arn
             )
 
+            self.logger.info("Created Lambda processor")
             # Grant permissions to Lambda functions
             for table_name in table_names:
                 table = tables[table_name]
+                self.logger.info(f"Granting read permissions to table '{table_name}'")
                 table.grant_read_data(process_dynamodb_update)
 
             return lambda_processor
@@ -392,6 +400,7 @@ class MainInfrastructureStack(cdk.Stack):
                     firehose_stream = self._create_delivery_stream(unique_delivery_stream_name, prefix, s3_bucket, firehose_role, lambda_processor)
                     firehose_streams[unique_delivery_stream_name] = firehose_stream
                     self._grant_firehose_invoke_lambda_permission(firehose_role, get_timestamp_function)
+                    self.logger.info(f"Created Firehose delivery stream '{unique_delivery_stream_name}'")
                 except Exception as e:
                     self.logger.error(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': {e}")
             else:
@@ -400,6 +409,7 @@ class MainInfrastructureStack(cdk.Stack):
 
     def _determine_prefix(self, name, data_stream_name):
         try:
+            self.logger.info(f"Determining prefix for {name}")
             return f"dynamodb-changes/{name.split('-')[0]}/" if '-' in name else "dynamodb-changes/default/"
         except Exception as e:
             self.logger.error(f"Error determining prefix for {name}: {e}")
@@ -407,6 +417,7 @@ class MainInfrastructureStack(cdk.Stack):
 
     def _create_delivery_stream(self, unique_delivery_stream_name, prefix, s3_bucket, firehose_role, lambda_processor):
         try:
+            
             return firehose.CfnDeliveryStream(
                 self,
                 unique_delivery_stream_name,
@@ -418,7 +429,8 @@ class MainInfrastructureStack(cdk.Stack):
                     role_arn=firehose_role.role_arn,
                     processing_configuration=self._create_processing_configuration(lambda_processor, unique_delivery_stream_name)
                 ),
-            )
+            ),self.logger.info(f"Created delivery stream {unique_delivery_stream_name}")
+            
         except Exception as e:
             self.logger.error(f"Error creating delivery stream {unique_delivery_stream_name}: {e}")
             return None
@@ -431,6 +443,7 @@ class MainInfrastructureStack(cdk.Stack):
                     parameter_value=lambda_processor.function_arn
                 )
             ]
+            self.logger.info(f"Creating processing configuration for {stream_name}")
             if stream_name.endswith("-1"):  # Assuming the first stream requires additional parameters
                 base_parameters += [
                     firehose.CfnDeliveryStream.ProcessorParameterProperty(
@@ -442,6 +455,8 @@ class MainInfrastructureStack(cdk.Stack):
                         parameter_value="60"
                     )
                 ]
+                self.logger.info(f"Added additional parameters for {stream_name}")
+            self.logger.info(f"Processing configuration created for {stream_name}")
             return firehose.CfnDeliveryStream.ProcessingConfigurationProperty(
                 enabled=True,
                 processors=[firehose.CfnDeliveryStream.ProcessorProperty(type="Lambda", parameters=base_parameters)]
@@ -458,5 +473,6 @@ class MainInfrastructureStack(cdk.Stack):
                     resources=[get_timestamp_function.function_arn],
                 )
             )
+            self.logger.info("Granted Firehose invoke permission to Lambda function")
         except Exception as e:
            self.logger.error(f"Failed to grant Firehose invoke permission to Lambda function: {e}")
