@@ -1,0 +1,65 @@
+graph LR
+A[Get Niches] --> B{Query AI};
+A --> C{Add Query to Queue};
+C --> D{Store in S3 Bucket};
+D --> E{Parse File};
+E --> F{New Niche?};
+F --> G{Notify Marketeer};
+F --> G{Get PR};
+F --> H[Process Niche queue];
+G --> I(Merge to DB);
+H --> I;
+F --> G{Trigger Step 2};
+G --> H{Get Affiliate};
+B --> I{Get PR};
+B --> J[Process queue];
+I --> K(Merge to DB);
+J --> K;
+K --> L{Notify};
+L --> M{Mark processed};
+M --> N{Trigger Step 3};
+N --> O{Get niche from DB}
+O --> P{Get affiliate program}
+P --> Q{Find Platform}
+Q --> R{Check Campaign Status}
+R --> S{Create/Update Campaign}
+S --> T{Start queue create content}
+O --> T
+T --> U{Create Content}
+U --> V{Notify reviewer}
+U --> W{Set re-run counter}
+E --> X{Update expiry date}
+U --> Y{Set status to running}
+V --> Z{Create db campaign}
+Z --> AA{Create campaign-content}
+V --> AB{Create db metrics}
+AA --> AC{Notify reviewer}
+AB --> F
+N --> BC{Start queue getCampaigns}
+BC --> BD{Get campaigns from DB}
+BE --> BF{Set status to Review}
+V --> BG{Set status to running}
+BE --> BG{Set status to running}
+BH --> T{Renew campaign}
+BE --> BI{Trigger Step 3}
+BE --> BJ{Notify User}
+BE --> BK{Reviewer decision}
+BF --> V
+BG --> Y
+BH --> T
+BK --> BL{Terminate/Pause/Expire}
+BK --> BM{Re-run}
+BK --> BN{Re-create content}
+BL --> BO{Cancel payment}
+BL --> BP{Set Campaign status}
+BL --> BQ{Cancel niche status}
+BL --> BR{Cancel Affiliate status}
+BL --> BS{Cancel Content status}
+BN --> V
+BM --> T
+BM --> BN{Set campaign-goal}
+BM --> BJ
+BO --> BP
+BP --> BQ
+BP --> BR
+BP --> BS

@@ -1,0 +1,40 @@
+sequenceDiagram
+    participant Marketeer
+    participant Lambda  
+    participant Gemini AI API
+    participant Niche Queue
+    participant Parser
+    participant Database
+    participant Bucket
+    participant Github
+    participant Niche Processor
+   Lambda->>Gemini AI: Get list of niches
+    activate Niche Queue
+    alt Queue Empty?
+        deactivate Niche Queue
+       Lambda->>Niche Queue: Process queue
+       Lambda(Get Results)
+    else
+        Niche Queue->>Lambda: Wait for empty queue
+    endif
+    deactivate Niche Queue
+   Lambda(Get Results)
+    alt First Time?
+       Lambda->>Niche Processor: Save results to S3
+       Lambda->>Marketeer: Notify - File Created
+    else
+       Lambda->>Parser: Trigger Parser
+       Lambda->>Marketeer: Notify - File Created
+        activate Marketeer
+        Marketeer->>Lambda: Review Results
+        deactivate Marketeer
+        alt New Niche?
+            Marketeer->>Lambda: Create Git PR
+           Lambda->>Database: Merge branch to main
+           Lambda->>Database: Add Niche to Database
+        else
+            // No action
+        endif
+    endif
+   Lambda->>Marketeer: Notify - New Addition
+   Lambda->>Lambda(Trigger Step 2)

@@ -8,4 +8,6 @@ move lambda iam roles from consumers/ to infra/ #done can't be done
 add phone numbers and emails to all subscriptions #done
 destroy firehose
 share constructs between stacks #done
-check sns-sqs subscriptions
+check sns-sqs subscriptions #done
+do high level flow diagram 
+connect to google ai
