@@ -17,8 +17,7 @@ import uuid
 from .custom_constructs.config_construct import ConfigConstruct
 from aws_cdk import aws_logs as logs
 from aws_cdk.aws_lambda import Code, Runtime
-
-
+import re
 
 
 class MainInfrastructureStack(cdk.Stack):
@@ -244,6 +243,12 @@ class MainInfrastructureStack(cdk.Stack):
         for topic_name, topic in sns_topics.items():
             # Extract the relevant part of the topic name (modify based on your pattern)
             queue_name_prefix = topic_name.split("-")[0]  # Assuming "-" separates topic and queue names
+            #queue_name_pattern = r"(.*?)-"  # Matches everything before the last "-"
+            #for topic_name, topic in sns_topics.items():
+                # Extract the prefix using the regular expression
+                #queue_name_prefix = re.match(queue_name_pattern, topic_name).group(1)
+                #self.logger.info(f"Extracted queue name prefix '{queue_name_prefix}' from topic '{topic_name}'")
+
 
             # Find the queue that starts with the extracted prefix
             for queue_name, queue in sqs_queues.items():

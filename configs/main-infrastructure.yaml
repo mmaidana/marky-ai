@@ -4,46 +4,46 @@
 bucket_names:
   data-stream-bucket: "data-stream-bucket"
   niche-finder-bucket: "niche-finder-bucket" 
-  affiliate-program-bucket: "affiliate-program-bucket"
+  affiliate_program-bucket: "affiliate_program-bucket"
   sub-service-cost-_bucket: "sub-service-cost-bucket"
   campaign-bucket: "campaign-bucket"
-  campaign-content-bucket: "campaign-content-bucket"
-  campaign-metrics-bucket: "campaign-metrics-bucket"
+  campaign_content-bucket: "campaign_content-bucket"
+  campaign_metrics-bucket: "campaign_metrics-bucket"
 
 
 # Table names
 table_names:
   niche-finder-table: "niche-finder-table" 
-  affiliate-program-table: "affiliate-program-table"
+  affiliate_program-table: "affiliate_program-table"
   sub-service-cost-_table: "sub-service-cost-table"
   campaign-table: "campaign-table"
-  campaign-content-table: "campaign-content-table"
-  campaign-metrics-table: "campaign-metrics-table"
+  campaign_content-table: "campaign_content-table"
+  campaign_metrics-table: "campaign_metrics-table"
 
 # Topic names
 topic_names:
   niche-finder-topic: "niche-finder-topic"
-  affiliate-program-topic: "affiliate-program-topic"
+  affiliate_program-topic: "affiliate_program-topic"
   campaign-topic: "campaign-topic"
-  campaign-content-topic: "campaign-content-topic"
-  campaign-metrics-topic: "campaign-metrics-topic"
+  campaign_content-topic: "campaign_content-topic"
+  campaign_metrics-topic: "campaign_metrics-topic"
 
 # Queue Configs
 queue_configs:
   niche-finder-queue:
     name: niche-finder-queue
     visibility_timeout: 300
-  affiliate-program-queue:
-    name: affiliate-program-queue
+  affiliate_program-queue:
+    name: affiliate_program-queue
     visibility_timeout: 300
   campaign-queue:
     name: campaign-queue
     visibility_timeout: 300
-  campaign-content-queue:
-    name: campaign-content-queue
+  campaign_content-queue:
+    name: campaign_content-queue
     visibility_timeout: 300
-  campaign-metrics-queue:
-    name: campaign-metrics-queue
+  campaign_metrics-queue:
+    name: campaign_metrics-queue
     visibility_timeout: 300
 
 # Data stream names
