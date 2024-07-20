@@ -8,17 +8,21 @@ E -->|Get Results| F[Lambda Processor]
 F -->|First Time?| $First$(Lambda Settler)
 $First$ --> |Save Brand New File to Bucket|H(Niche S3 Bucket)
 $First$ -->|Create Niche Repo| I(Github)
-$First$ -->|Commit file to Repo| I
+$First$ & H -->|Commit file to Repo| I
+I -->|Publish Event to Niche SNS| T[Niche SNS Topic]
+T -->|Lambda Settler is subscribe to topic| $First$
 $First$ -->|Add Niche/s to Database| K(Niche DynamoDB)
-$First$ -->|Notify - File Created| L(Marketeer)
-$First$ -->|Trigger Step 2| M[Step 2: Get Affiliate Program]
+$First$ -->|Publish Notifications| T
+T -->|Notify - File Created| L(Marketeer)
+$First$ -->|Trigger Step 2| M[Step 2: Get Affilliate Program]
 F -->|else| N(Lambda Parser)
 N -->|Create Branch| I
 N -->|Save File to Bucket with New Niche| H
-N -->|Commit File to Branch| I
+N & H  -->|Commit File to Branch| I
 N -->|Parser Review Results| O(Lambda Reviewer)
 O -->|New Niche?| $NewNiche$(Notify Marketeer)
-$NewNiche$ --> L
+$NewNiche$ --> T
+T --> |Notify- New Niches to Review| L
 L -->|Review Results| I
 I -->|Validate Results| $AcceptResults$(Accept Results)
 $AcceptResults$ --> L
@@ -27,3 +31,10 @@ I -->|Github Actions call Parser| N
 N -->|Add Niche to Database| K
 N -->|Trigger Step 2| M
 M -->|Process Next Item in Niche Queue| D
+M -->|Get Unprocessed Niches from DB| K
+M -->|Call Affilliate Lambda| P[Affilliate Lambda]
+P -->|Add Query to Queue| Q[Affiliate SQS]
+Q -->|Queue Empty?| R(Process Affilliate Queue)
+R -->|Queue is being processed| P
+P -->|Get best affilliate programs| E(Gemini AI)
+E -->|Get Results| S[Affliate Lambda Processor]
