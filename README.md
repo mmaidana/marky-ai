@@ -1,5 +1,5 @@
 
-# AI driven Affiliate Marketing Automation project!
+# Marky-Ai: AI driven Affiliate Marketing Automation project!
 
 
 
