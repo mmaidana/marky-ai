@@ -1,5 +1,8 @@
 # General Shared Config Data
 
-#Subscription Data
+# Subscription Data
 subscription-phone-number: "+610406252420"
 subscription-email-address: "mfawsaibot@gmail.com"
+
+# Log Group Names
+log_group_name: "shared-log-group"

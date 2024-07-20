@@ -1,26 +1,26 @@
 # AWS Resources Configurations
 
-#bucket names
+# Bucket names
 bucket_names:
   data-stream-bucket: "data-stream-bucket"
   niche-finder-bucket: "niche-finder-bucket" 
   affiliate-program-bucket: "affiliate-program-bucket"
-  sub-service-cost-bucket: "sub-service-cost-bucket"
+  sub-service-cost-_bucket: "sub-service-cost-bucket"
   campaign-bucket: "campaign-bucket"
   campaign-content-bucket: "campaign-content-bucket"
   campaign-metrics-bucket: "campaign-metrics-bucket"
 
 
-#table names
+# Table names
 table_names:
   niche-finder-table: "niche-finder-table" 
   affiliate-program-table: "affiliate-program-table"
-  sub-service-cost-table: "sub-service-cost-table"
+  sub-service-cost-_table: "sub-service-cost-table"
   campaign-table: "campaign-table"
-  campaign_content-table: "campaign-content-table"
-  campaign_metrics-table: "campaign-metrics-table"
+  campaign-content-table: "campaign-content-table"
+  campaign-metrics-table: "campaign-metrics-table"
 
-#topic names
+# Topic names
 topic_names:
   niche-finder-topic: "niche-finder-topic"
   affiliate-program-topic: "affiliate-program-topic"
@@ -28,7 +28,7 @@ topic_names:
   campaign-content-topic: "campaign-content-topic"
   campaign-metrics-topic: "campaign-metrics-topic"
 
-#Queue Configs
+# Queue Configs
 queue_configs:
   niche-finder-queue:
     name: niche-finder-queue
@@ -46,5 +46,8 @@ queue_configs:
     name: campaign-metrics-queue
     visibility_timeout: 300
 
-#data stream names
+# Data stream names
 data-stream-name: "data-stream"
+
+# Log Group Names
+log_group_name: "main-infrastructure-log-group"

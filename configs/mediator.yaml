@@ -1,0 +1,4 @@
+# General Mediator Config Data
+
+# Log Group Names
+log_group_name: "mediator-log-group"

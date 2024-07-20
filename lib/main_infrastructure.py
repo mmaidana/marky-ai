@@ -15,88 +15,129 @@ from aws_cdk import aws_sns_subscriptions as subscriptions
 import logging
 import uuid
 from .custom_constructs.config_construct import ConfigConstruct
+from aws_cdk import aws_logs as logs
+from aws_cdk.aws_lambda import Code, Runtime
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+
 
 
 class MainInfrastructureStack(cdk.Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
-        
+    def __init__(self, scope: Construct, construct_id: str, common_stack, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)        
+
         try:
+
+            # Create Logger Instance
+            StackName = cdk.Stack.of(self).stack_name
+            logger = common_stack._create_logger(StackName=StackName)
+            self.logger = logger
+
+
+            logger.info("Loading configuration and Creating Constructs in MainInfrastructureStack")
             # Loading Config Data
-            config_data = ConfigConstruct(self, "MainInfrastructureConfig", config_file_path="configs/main-infrastructure.yaml") 
+            config_data = ConfigConstruct(self, "MainInfrastructureConfig", config_file_path="configs/main-infrastructure.yaml")
+            logger.info("Configuration data loaded successfully in MainInfrastructureStack")
+            log_group_name = config_data.get_value("log_group_name")
+
+            # Define the log group for infrastructure deployment logs
+            logger.info("Creating log group for infrastructure deployment logs")
+            log_group = common_stack._create_log_group(log_group_name, StackName= StackName) 
+
             shared_config_data = ConfigConstruct(self, "SharedConfig", config_file_path="configs/shared-data.yaml")
+            logger.info("Shared Configuration data loaded successfully in MainInfrastructureStack")
 
             # ... create S3 buckets, DynamoDB tables, etc. using bucket_names and table_names from config_data ...
             unique_id = str(uuid.uuid4())  # Generate a unique ID
-            self.data_stream_name = config_data.get_value("data_stream_name") # Get the data stream name from the config file
 
+            
+            self.data_stream_name = config_data.get_value("data-stream-name") # Get the data stream name from the config file
+            logger.info(f"Creating Data Stream Name: {self.data_stream_name}")
+            
             # Access the 'bucket_names' dictionary and then the 'stream_bucket' value
             bucket_names = config_data.get_value('bucket_names')
             s3_stream_bucket_name = bucket_names.get('data-stream-bucket')
             self.s3_stream_bucket = s3.Bucket.from_bucket_name(self, "BucketById",  s3_stream_bucket_name) # Get the S3 bucket name from the config file
+            logger.info(f"Data Stream Bucket Created - Name: {s3_stream_bucket_name}")
 
             # Create S3 Buckets
+            logger.info("Creating S3 Buckets")
             s3_buckets = self._create_s3_buckets(config_data, unique_id)
             
             # Create SNS Topics and SQS Queues
+            logger.info("Creating SNS Topics")
             sns_topics = self._create_sns_topics(config_data, unique_id, shared_config_data)
+            logger.info("Creating SQS Queues")
             sqs_queues = self._create_sqs_queues(config_data, unique_id)
 
             # Subscribe queues to topics
+            logger.info("Subscribing Queues to Topics")
             self._subscribe_queues_to_topics(sns_topics, sqs_queues)
 
             # Create Kinesis Data Stream for DynamoDB Change Data Capture (CDC)
+            logger.info("Creating Kinesis Data Stream (disabled)")
             #data_stream = self._create_data_stream(config_data) 
 
             # Create IAM role for Firehose
+            logger.info("Creating Firehose Role")
             firehose_role = self._create_firehose_role()
 
             # Create DynamoDB tables
+            logger.info("Creating DynamoDB Tables")
             tables = self._create_dynamodb_tables(config_data, firehose_role, unique_id)
             table_names = config_data.get_value('table_names', [])  
 
             # Create Lambda functions
+            logger.info("Creating Process Update Lambda Function for DynamoDB and Kinesis")
             process_dynamodb_update = self._create_process_update_lambda()
             get_timestamp_function = self._create_get_timestamp_function()
             lambda_processor = self._create_lambda_processor(config_data,process_dynamodb_update, tables)        
         
             # Create Firehose delivery streams
+            logger.info("Creating Firehose Delivery Streams (Disabled)")
             #firehose_streams = self._create_firehose_delivery_streams(firehose_role, lambda_processor, data_stream_name=self.data_stream_name, s3_bucket=self.s3_stream_bucket, table_names=table_names, unique_id=unique_id, get_timestamp_function=get_timestamp_function)
-
-            # Add tags to all resources for easy identification
-            cdk.Tags.of(self).add("Key", "Value")
+            end_logger = common_stack._end_logger(StackName=StackName)
 
         except FileNotFoundError as e:
-            print(f"Error: Configuration file not found - {e}")
+            #print(f"Error: Configuration file not found - {e}")
+            logger.error(f"Error: Configuration file not found - {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             #cdk.App().synth()  # Optional: Synthesize the CDK CloudFormation template even on error
         except yaml.YAMLError as e:
-            print(f"Error parsing YAML file: {e}")
+            #print(f"Error parsing YAML file: {e}")
+            logger.error(f"Error parsing YAML file: {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
         except ValueError as e:
-            print(f"Wrong Method or value error: {e}")
+            #print(f"Wrong Method or value error: {e}")
+            logger.error(f"Wrong Method or value error: {e}")
         except Exception as e:
-            print(f"Error loading configuration - Unexpected error: {e}")
+            #print(f"Error loading configuration - Unexpected error: {e}")
+            logger.error(f"Error loading configuration - Unexpected error: {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             #cdk.App().synth()  # Optional: Synthesize the CDK CloudFormation template even on error
+
+
+    # Add tags to all resources for easy identification
+    def _create_resource_tagger(self, key, value):
+        cdk.Tags.of(self).add(key, value)            
+        self.logger.info(f"Adding the following tag to resource key:{key} - value:{value}")
+
             
     # Defining the helper methods for creating resources
     # Create Bucket Method
     def _create_s3_buckets(self, config_data, unique_id):
         bucket_names = config_data.get_value('bucket_names', {})
         s3_buckets = {}
-
+        self._create_resource_tagger("ResourceType", "S3 Bucket")
         for bucket_name, actual_bucket_name in bucket_names.items():
             unique_bucket_name = self._generate_unique_resource_name(actual_bucket_name, unique_id)
             try:
                 s3_bucket = self._create_single_s3_bucket(bucket_name, unique_bucket_name)
                 s3_buckets[bucket_name] = s3_bucket
+                self.logger.info(f"Created S3 bucket '{bucket_name}' with unique name '{unique_bucket_name}'")
+                self._create_resource_tagger("BucketName", bucket_name)
             except Exception as e:
+                self.logger.error(f"Failed to create S3 bucket '{bucket_name}': {e}")
                 self._handle_bucket_creation_error(bucket_name, e)
 
         return s3_buckets
@@ -114,9 +155,10 @@ class MainInfrastructureStack(cdk.Stack):
         A string representing the unique resource name.
         """
         try:
+            self.logger.info(f"Generating unique name for {base_name}-{unique_id}")
             return f"{base_name}-{unique_id}"
         except Exception as e:
-            print(f"Error generating unique name for {base_name}: {e}")
+            self.logger.error(f"Error generating unique name for {base_name}: {e}")
             return None
 
     def _create_single_s3_bucket(self, bucket_name, unique_bucket_name):
@@ -128,17 +170,17 @@ class MainInfrastructureStack(cdk.Stack):
                 removal_policy=cdk.RemovalPolicy.DESTROY
             )
         except Exception as e:
-            print(f"Error creating S3 bucket {bucket_name}: {e}")
+            self.logger.error(f"Error creating S3 bucket {bucket_name}: {e}")
             return None
 
     def _handle_bucket_creation_error(self, bucket_name, error):
-        print(f"Failed to create bucket {bucket_name}: {error}")
+        self.logger.error(f"Failed to create bucket {bucket_name}: {error}")
             
     def _create_sns_topics(self, config_data, unique_id, shared_config_data):
         # Retrieve topic names from config_data, defaulting to an empty dictionary if not found
         topic_names = config_data.get_value('topic_names', {})
         sns_topics = {}
-
+        self._create_resource_tagger("ResourceType", "SNS Topic")
         for topic_name, topic_display_name in topic_names.items():
             try:
                 # Debugging: Print the type and value of topic_display_name
@@ -152,6 +194,7 @@ class MainInfrastructureStack(cdk.Stack):
                 unique_topic_name = self._generate_unique_resource_name(topic_name, unique_id) #f"{topic_name}-{unique_id}" # Append unique ID to topic name
                 # Create an SNS topic with the specified name and display name, and store it in the sns_topics dictionary
                 sns_topics[topic_name] = sns.Topic(self, id=unique_topic_name, display_name=topic_display_name)
+                self.logger.info(f"Created SNS topic '{topic_name}' with display name '{topic_display_name}'")
                 Subscription(self, f"EmailSubscription-{topic_name}",
                              topic=sns_topics[topic_name],
                              protocol=SubscriptionProtocol.EMAIL,
@@ -160,8 +203,10 @@ class MainInfrastructureStack(cdk.Stack):
                              topic=sns_topics[topic_name],
                              protocol=SubscriptionProtocol.SMS,
                              endpoint=shared_config_data["subscription-phone-number"])  # Required
+                self.logger.info(f"Subscribed email and phone number to SNS topic {topic_name}")
+                self._create_resource_tagger("TopicName", topic_name)
             except Exception as e:
-                print(f"Failed to create SNS topic '{topic_name}': {e}")
+                self.logger.error(f"Failed to create SNS topic '{topic_name}': {e}")
 
         # Return the dictionary of created SNS topics
         return sns_topics
@@ -169,6 +214,7 @@ class MainInfrastructureStack(cdk.Stack):
     def _create_sqs_queues(self, config_data, unique_id):
         queue_configs = config_data.get_value('queue_configs', {})
         sqs_queues = {}
+        self._create_resource_tagger("ResourceType", "SQS Queue")
 
         for queue_name, queue_config in queue_configs.items():
             try:
@@ -185,9 +231,11 @@ class MainInfrastructureStack(cdk.Stack):
                     queue_name=queue_config['name'],
                     visibility_timeout=cdk.Duration.seconds(queue_config['visibility_timeout'])
                 )
+                self.logger.info(f"Created SQS queue '{queue_name}' with unique name '{unique_queue_name}'")
                 sqs_queues[queue_name] = queue
+                self._create_resource_tagger("QueueName", queue_name)
             except Exception as e:
-                print(f"Failed to create SQS queue '{queue_name}': {e}")
+                self.logger.error(f"Failed to create SQS queue '{queue_name}': {e}")
 
         return sqs_queues
     
@@ -202,15 +250,15 @@ class MainInfrastructureStack(cdk.Stack):
                 if queue_name.startswith(queue_name_prefix):
                     try:
                         topic.add_subscription(subscriptions.SqsSubscription(queue))
-                        #print(f"Subscribed queue '{queue_name}' to topic '{topic_name}'")
+                        self.logger.info(f"Subscribed queue '{queue_name}' to topic '{topic_name}'")
                         break  # Exit inner loop once a matching queue is found
                     except Exception as e:
-                        print(f"Failed to subscribe queue '{queue_name}' to topic '{topic_name}': {e}")
+                        self.logger.error(f"Failed to subscribe queue '{queue_name}' to topic '{topic_name}': {e}")
                         continue  # Continue the inner loop to find another matching queue
 
             # Handle scenario where no matching queue is found for the topic
             else:
-                print(f"No queue found for topic '{topic_name}' with prefix '{queue_name_prefix}'")
+               self.logger.error(f"No queue found for topic '{topic_name}' with prefix '{queue_name_prefix}'")
 
 
     # Create DynamoDB Tables Method
@@ -238,7 +286,7 @@ class MainInfrastructureStack(cdk.Stack):
                 tables[table_name] = table
                 table.grant_read_data(firehose_role)  # Grant read permissions to Firehose role
             except Exception as e:
-                print(f"Failed to create DynamoDB table '{table_name}': {e}") 
+                self.logger.error(f"Failed to create DynamoDB table '{table_name}': {e}") 
         return tables
     
     # Create Kinesis Data Stream with retrieved name
@@ -253,7 +301,7 @@ class MainInfrastructureStack(cdk.Stack):
             )
             return data_stream
         except Exception as e:
-            print(f"Failed to create Kinesis Data Stream: {e}")
+            self.logger.error(f"Failed to create Kinesis Data Stream: {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             return None
 
@@ -271,7 +319,7 @@ class MainInfrastructureStack(cdk.Stack):
             )
             return firehose_role
         except Exception as e:
-            print(f"Failed to create Firehose role: {e}")
+            self.logger.error(f"Failed to create Firehose role: {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             return None
     
@@ -284,6 +332,7 @@ class MainInfrastructureStack(cdk.Stack):
                 runtime=lambda_.Runtime.PYTHON_3_9,
                 handler="process_dynamodb_update.handler",  # Adjust the handler accordingly
                 code=lambda_.Code.from_asset("lambda_handler/infrastructure/process_update")
+                #log_group=infra_deployment_log_group
                 #environment={
                 #    "TABLE_NAMES": json.dumps(table_names),  # Pass table names to Lambda function
                 # Other environment variables if needed
@@ -291,7 +340,7 @@ class MainInfrastructureStack(cdk.Stack):
             )
             return process_dynamodb_update
         except Exception as e:
-            print(f"Failed to create process update Lambda function: {e}")
+            self.logger.error(f"Failed to create process update Lambda function: {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             return None
     
@@ -307,7 +356,7 @@ class MainInfrastructureStack(cdk.Stack):
             )
             return get_timestamp_function
         except Exception as e:
-            print(f"Failed to create get timestamp Lambda function: {e}")
+            self.logger.error(f"Failed to create get timestamp Lambda function: {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             return None
     
@@ -327,7 +376,7 @@ class MainInfrastructureStack(cdk.Stack):
 
             return lambda_processor
         except Exception as e:
-            print(f"Failed to create Lambda processor: {e}")
+            self.logger.error(f"Failed to create Lambda processor: {e}")
             # Handle the error, e.g., raise a custom exception, log the error, etc.
             return None
 
@@ -344,16 +393,16 @@ class MainInfrastructureStack(cdk.Stack):
                     firehose_streams[unique_delivery_stream_name] = firehose_stream
                     self._grant_firehose_invoke_lambda_permission(firehose_role, get_timestamp_function)
                 except Exception as e:
-                    print(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': {e}")
+                    self.logger.error(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': {e}")
             else:
-                print(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': Lambda processor is None or its function_arn is not available")
+                self.logger.error(f"Failed to create Firehose delivery stream '{unique_delivery_stream_name}': Lambda processor is None or its function_arn is not available")
         return firehose_streams
 
     def _determine_prefix(self, name, data_stream_name):
         try:
             return f"dynamodb-changes/{name.split('-')[0]}/" if '-' in name else "dynamodb-changes/default/"
         except Exception as e:
-            print(f"Error determining prefix for {name}: {e}")
+            self.logger.error(f"Error determining prefix for {name}: {e}")
             return "dynamodb-changes/error/"
 
     def _create_delivery_stream(self, unique_delivery_stream_name, prefix, s3_bucket, firehose_role, lambda_processor):
@@ -371,7 +420,7 @@ class MainInfrastructureStack(cdk.Stack):
                 ),
             )
         except Exception as e:
-            print(f"Error creating delivery stream {unique_delivery_stream_name}: {e}")
+            self.logger.error(f"Error creating delivery stream {unique_delivery_stream_name}: {e}")
             return None
 
     def _create_processing_configuration(self, lambda_processor, stream_name):
@@ -398,7 +447,7 @@ class MainInfrastructureStack(cdk.Stack):
                 processors=[firehose.CfnDeliveryStream.ProcessorProperty(type="Lambda", parameters=base_parameters)]
             )
         except Exception as e:
-            print(f"Error creating processing configuration for {stream_name}: {e}")
+            self.logger.error(f"Error creating processing configuration for {stream_name}: {e}")
             return firehose.CfnDeliveryStream.ProcessingConfigurationProperty(enabled=False)
 
     def _grant_firehose_invoke_lambda_permission(self, firehose_role, get_timestamp_function):
@@ -410,4 +459,4 @@ class MainInfrastructureStack(cdk.Stack):
                 )
             )
         except Exception as e:
-            print(f"Failed to grant Firehose invoke permission to Lambda function: {e}")
+           self.logger.error(f"Failed to grant Firehose invoke permission to Lambda function: {e}")

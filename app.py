@@ -2,6 +2,7 @@
 import os
 
 import aws_cdk as cdk
+from lib.shared_constructs.common_resource import CommonResourceStack as CommonStackClass  # Renamed to avoid naming conflict
 from lib.main_infrastructure import MainInfrastructureStack
 from lib.shared_constructs.mediator import MediatorStack as MediatorStackClass  # Renamed to avoid naming conflict
 from lib.consumers.niche_finder import NicheFinderStack
@@ -10,9 +11,10 @@ from lib.consumers.niche_finder import NicheFinderStack
 app = cdk.App()
 
 # Instantiate stacks
-main_infrastructure_stack = MainInfrastructureStack(app, "MainInfrastructureStack")  # MainInfrastructureStack(app, "MainInfrastructureStack", config_data)
-mediator_stack = MediatorStackClass(app, "MediatorStack")  # Instantiate the MediatorStack
-niche_finder_stack = NicheFinderStack(app, "NicheFinderStack",mediator_stack=mediator_stack)  # NicheFinderStack(app, "NicheFinderStack", config_data)
+common_stack = CommonStackClass(app, "CommonResourceStack")
+main_infrastructure_stack = MainInfrastructureStack(app, "MainInfrastructureStack",common_stack=common_stack)  # MainInfrastructureStack(app, "MainInfrastructureStack", config_data)
+mediator_stack = MediatorStackClass(app, "MediatorStack",common_stack=common_stack)  # Instantiate the MediatorStack
+niche_finder_stack = NicheFinderStack(app, "NicheFinderStack", common_stack=common_stack, mediator_stack=mediator_stack)  # NicheFinderStack(app, "NicheFinderStack", config_data)
 
 
 

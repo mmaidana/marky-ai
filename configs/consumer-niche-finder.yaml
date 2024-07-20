@@ -6,3 +6,6 @@ cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as ne
 api_key: "your-gemini-api-key"  # Example for a hypothetical API key
 api_endpoint: "https://<region>.vertexai.google/v1/projects/<project-id>/locations/<location>/models/<model-id>:generate" # Example for a hypothetical API endpoint
 
+# Log Group Names
+log_group_name: "consumer-niche-finder-log-group"
+

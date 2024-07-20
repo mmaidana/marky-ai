@@ -6,43 +6,66 @@ from aws_cdk import aws_iam as iam
 from aws_cdk.aws_events import Rule, Schedule
 from aws_cdk import aws_events_targets as targets
 from lib.custom_constructs.config_construct import ConfigConstruct
+from aws_cdk import aws_logs as logs
+from aws_cdk.aws_lambda import Code, Runtime
+import os
 
 class NicheFinderStack(cdk.Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, mediator_stack, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, common_stack, mediator_stack, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         try:
+            # Create Logger Instance
+            StackName = cdk.Stack.of(self).stack_name
+            logger = common_stack._create_logger(StackName=StackName)
+            self.logger = logger
+
+            logger.info("Loading " + StackName + " configuration")
             # Loading Config Data
             config_data = ConfigConstruct(self, "ConsumerNicheFinderConfig", config_file_path="configs/consumer-niche-finder.yaml")
+            log_group_name = config_data.get_value("log_group_name")
 
+            logger.info("Loading Shared Data configuration")
             # Loading Shared Data Config
             shared_config_data = ConfigConstruct(self, "SharedDataConfig", config_file_path="configs/shared-data.yaml")
 
+            logger.info("Loading Prompt Data configuration")
             # Loading Prompt Data
             prompt_data = ConfigConstruct(self, "PromptConfig", config_file_path="lambda_handler/consumer/niche-finder/prompts/niche-finder-prompt.yaml")
 
+            # Setup for CloudWatch log group
+            log_group =  common_stack._create_log_group(log_group_name, StackName= StackName)
+
             #  Get the S3 bucket, SQS queue, and SNS topic from the MediatorStack
             niche_finder_s3_bucket =  mediator_stack.buckets['niche-finder-bucket']
-            #print(f"Debug: bucket_name={niche_finder_s3_bucket.bucket_name}")
+            logger.info(f"Debug: bucket_name={niche_finder_s3_bucket.bucket_name}")
 
             niche_finder_queue = mediator_stack.queues['niche-finder-queue']
-            #print(f"Debug: queue_name={niche_finder_queue.queue_name}")
+            logger.info(f"Debug: queue_name={niche_finder_queue.queue_name}")
 
             niche_finder_topic = mediator_stack.topics['niche-finder-topic']
-            #print(f"Debug: topic_name={niche_finder_topic.topic_name}")
+            logger.info(f"Debug: topic_name={niche_finder_topic.topic_name}")
 
             # IAM Role for Lambda function
+            logger.info("Creating Lambda role")
             lambda_role = self._create_lambda_role()
+            
 
-            # Lambda function 
+            # Lambda function
+            logger.info("Creating Lambda function") 
             lambda_fn = self._create_lambda_fn(lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic)
 
             # CloudWatch Events Rule for Lambda function
+            logger.info("Creating CloudWatch Events rule for Lambda function")
             cloud_watch_event = self._create_cloudwatch_rule_for_lambda(lambda_fn, config_data)
 
         except Exception as e:
-           print(f"Error initializing NicheFinder: {str(e)}")
+           logger.error(f"Error initializing NicheFinder: {str(e)}")
+
+        
+        end_logger = common_stack._end_logger(StackName=StackName)
+        
 
     # Create Lambda role    
     def _create_lambda_role(self):
@@ -63,9 +86,10 @@ class NicheFinderStack(cdk.Stack):
             lambda_role.add_managed_policy(
                 iam.ManagedPolicy.from_aws_managed_policy_name("AmazonTextractFullAccess")  # Corrected policy name
             )
+            self.logger.info("Lambda role created successfully")
             return lambda_role
         except Exception as e:
-            print(f"Error creating Lambda role: {str(e)}")
+            self.logger.error(f"Error creating Lambda role: {str(e)}")
             return None
         
     #  Create Lambda function    
@@ -85,9 +109,10 @@ class NicheFinderStack(cdk.Stack):
                                      "NICHE_FINDER_SNS_EMAIL_ADDRESS": shared_config_data.get_value("subscription-email-address"),
                                      "NICHE_FINDER_PROMPT_DATA": prompt_data.get_value("prompt")
                                  })
+            self.logger.info("Lambda function created successfully")
             return lambda_fn
         except Exception as e:
-            print(f"Error creating Lambda function: {str(e)}")
+            self.logger.error(f"Error creating Lambda function: {str(e)}")
             return None
         
 
@@ -102,6 +127,8 @@ class NicheFinderStack(cdk.Stack):
                         schedule=Schedule.expression(scheduler))
             # Add Lambda function as target
             rule.add_target(targets.LambdaFunction(lambda_fn))
+            self.logger.info("CloudWatch Events Rule created successfully")
+            #return rule
 
         except Exception as e:
-            print(f"Error creating CloudWatch Events Rule: {str(e)}")
+            self.logger.error(f"Error creating CloudWatch Events Rule: {str(e)}")
