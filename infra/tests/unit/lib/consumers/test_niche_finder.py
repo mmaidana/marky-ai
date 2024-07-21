@@ -1,6 +1,4 @@
 import unittest
-from lib.consumers.niche_finder import NicheFinder
-import unittest
 import aws_cdk as cdk
 from lib.consumers.niche_finder import NicheFinderStack
 
@@ -79,7 +77,7 @@ if __name__ == '__main__':
     unittest.main()
 
 import unittest
-from unittest.mock import patch
+# Remove the unused import statement
 
 from lib.consumers.niche_finder import NicheFinderStack
 from aws_cdk import cdk

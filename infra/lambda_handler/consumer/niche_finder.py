@@ -23,6 +23,8 @@ def nicheFinder(event, context):
     email_address = os.environ["NICHE_FINDER_SNS_EMAIL_ADDRESS"]
     prompt_data = os.environ["NICHE_FINDER_PROMPT_DATA"]
 
+    print (f"Processing prompt data: {prompt_data}")
+
     # Your Lambda function logic here (using prompt_file_name, config_data)
     # ...
 

@@ -17,11 +17,11 @@ class MediatorStack(cdk.Stack):
 
             logger.info("Loading configuration and Referencing Objects in " + StackName)
             # Loading Config Data
-            config = ConfigConstruct(self, "InfraConfig", config_file_path="configs/main-infrastructure.yaml")
+            config = ConfigConstruct(self, "InfraConfig", config_file_path="main-infrastructure.yaml")
             logger.info("Infra Configuration data loaded successfully in " + StackName)
 
             # Loading Mediator Config Data
-            mediator_config = ConfigConstruct(self, "MediatorConfig", config_file_path="configs/mediator.yaml")
+            mediator_config = ConfigConstruct(self, "MediatorConfig", config_file_path="mediator.yaml")
             logger.info("Mediator Configuration data loaded successfully in " + StackName)
             log_group_name = mediator_config.get_value("log_group_name")
 

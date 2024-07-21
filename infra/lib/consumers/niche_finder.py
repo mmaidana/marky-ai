@@ -5,7 +5,7 @@ from aws_cdk.aws_lambda import Function, Code, Runtime
 from aws_cdk import aws_iam as iam
 from aws_cdk.aws_events import Rule, Schedule
 from aws_cdk import aws_events_targets as targets
-from lib.custom_constructs.config_construct import ConfigConstruct
+from infra.lib.custom_constructs.config_construct import ConfigConstruct
 from aws_cdk import aws_logs as logs
 from aws_cdk.aws_lambda import Code, Runtime
 import os
@@ -23,16 +23,16 @@ class NicheFinderStack(cdk.Stack):
 
             logger.info("Loading " + StackName + " configuration")
             # Loading Config Data
-            config_data = ConfigConstruct(self, "ConsumerNicheFinderConfig", config_file_path="configs/consumer-niche-finder.yaml")
+            config_data = ConfigConstruct(self, "ConsumerNicheFinderConfig", config_file_path="consumer-niche-finder.yaml")
             log_group_name = config_data.get_value("log_group_name")
 
             logger.info("Loading Shared Data configuration")
             # Loading Shared Data Config
-            shared_config_data = ConfigConstruct(self, "SharedDataConfig", config_file_path="configs/shared-data.yaml")
+            shared_config_data = ConfigConstruct(self, "SharedDataConfig", config_file_path="shared-data.yaml")
 
             logger.info("Loading Prompt Data configuration")
             # Loading Prompt Data
-            prompt_data = ConfigConstruct(self, "PromptConfig", config_file_path="lambda_handler/consumer/niche-finder/prompts/niche-finder-prompt.yaml")
+            prompt_data = ConfigConstruct(self, "PromptConfig", config_file_path="prompts/niche-finder-prompt.yaml")
 
             # Setup for CloudWatch log group
             log_group =  common_stack._create_log_group(log_group_name, StackName= StackName)
@@ -54,7 +54,10 @@ class NicheFinderStack(cdk.Stack):
 
             # Lambda function
             logger.info("Creating Lambda function") 
-            lambda_fn = self._create_lambda_fn(lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic)
+            # Adjust the path to where your lambda_handler directory is located relative to the script execution path
+            lambda_handler_path = "./infra/lambda_handler/consumer"  # Example if you're in /Users/marcelo/dev
+            self.logger.info(f"Lambda Handler path: {lambda_handler_path}")
+            lambda_fn = self._create_lambda_fn(lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic, lambda_handler_path)
 
             # CloudWatch Events Rule for Lambda function
             logger.info("Creating CloudWatch Events rule for Lambda function")
@@ -91,14 +94,16 @@ class NicheFinderStack(cdk.Stack):
         except Exception as e:
             self.logger.error(f"Error creating Lambda role: {str(e)}")
             return None
-        
+
+
+    
     #  Create Lambda function    
-    def _create_lambda_fn(self, lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic):
+    def _create_lambda_fn(self, lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic, lambda_handler_path):
         try:
             # Lambda function (receive prompt and config file names from config data construct)
             lambda_fn = Function(self, "NicheFinderLambdaFn",
                                  runtime=Runtime.PYTHON_3_9,
-                                 code=Code.from_asset("lambda_handler"),
+                                 code=Code.from_asset(F"{lambda_handler_path}"),
                                  handler="NicheFinder.handler",
                                  role=lambda_role,
                                  environment={

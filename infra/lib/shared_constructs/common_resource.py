@@ -4,6 +4,7 @@ from ..custom_constructs.config_construct import ConfigConstruct
 from constructs import Construct
 from aws_cdk import aws_logs as logs
 import logging
+import os
 
 class CommonResourceStack(cdk.Stack):
     def __init__(self, scope: Construct, id: str, **kwargs):
@@ -16,7 +17,7 @@ class CommonResourceStack(cdk.Stack):
 
             self.logger.info("Loading Shared configurations")
             # Loading Shared Configuration Data
-            shared_config = ConfigConstruct(self, "SharedConfig", config_file_path="configs/shared-data.yaml")
+            shared_config = ConfigConstruct(self, "SharedConfig", config_file_path="shared-data.yaml")
             self.logger.info("Shared Configuration data loaded successfully in " + StackName)
 
             # Create Log Group based on name in shared configuration

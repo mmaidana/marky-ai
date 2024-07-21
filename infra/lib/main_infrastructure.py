@@ -35,7 +35,7 @@ class MainInfrastructureStack(cdk.Stack):
 
             logger.info("Loading configuration and Creating Constructs in MainInfrastructureStack")
             # Loading Config Data
-            config_data = ConfigConstruct(self, "MainInfrastructureConfig", config_file_path="configs/main-infrastructure.yaml")
+            config_data = ConfigConstruct(self, "MainInfrastructureConfig", config_file_path="main-infrastructure.yaml")
             logger.info("Configuration data loaded successfully in MainInfrastructureStack")
             log_group_name = config_data.get_value("log_group_name")
 
@@ -43,7 +43,7 @@ class MainInfrastructureStack(cdk.Stack):
             logger.info("Creating log group for infrastructure deployment logs")
             self.log_group = common_stack._create_log_group(log_group_name, StackName= StackName) 
 
-            shared_config_data = ConfigConstruct(self, "SharedConfig", config_file_path="configs/shared-data.yaml")
+            shared_config_data = ConfigConstruct(self, "SharedConfig", config_file_path="shared-data.yaml")
             logger.info("Shared Configuration data loaded successfully in MainInfrastructureStack")
 
             # ... create S3 buckets, DynamoDB tables, etc. using bucket_names and table_names from config_data ...
@@ -88,6 +88,9 @@ class MainInfrastructureStack(cdk.Stack):
 
             # Create Lambda functions
             logger.info("Creating Process Update Lambda Function for DynamoDB and Kinesis")
+            # Adjust the path to where your lambda_handler directory is located relative to the script execution path
+            self.lambda_handler_path = "./infra/lambda_handler/infrastructure"  # Example if you're in /Users/marcelo/dev
+            self.logger.info(f"Lambda Handler path: {self.lambda_handler_path}")
             process_dynamodb_update = self._create_process_update_lambda()
             get_timestamp_function = self._create_get_timestamp_function()
             lambda_processor = self._create_lambda_processor(config_data,process_dynamodb_update, tables)        
@@ -338,7 +341,7 @@ class MainInfrastructureStack(cdk.Stack):
                 "process-dynamodb-update",
                 runtime=lambda_.Runtime.PYTHON_3_9,
                 handler="process_dynamodb_update.handler",  # Adjust the handler accordingly
-                code=lambda_.Code.from_asset("lambda_handler/infrastructure/process_update"),
+                code=lambda_.Code.from_asset(F"{self.lambda_handler_path}/process_update"),
                 log_group=self.log_group
                 #environment={
                 #    "TABLE_NAMES": json.dumps(table_names),  # Pass table names to Lambda function
@@ -359,7 +362,7 @@ class MainInfrastructureStack(cdk.Stack):
                 self,
                 "get-timestamp-func",
                 runtime=lambda_.Runtime.PYTHON_3_9,
-                code=lambda_.Code.from_asset("lambda_handler/infrastructure/get_timestamp"),
+                code=lambda_.Code.from_asset(F"{self.lambda_handler_path}/get_timestamp"),
                 handler="get_timestamp.handler",
                 log_group=self.log_group
 

@@ -2,10 +2,10 @@
 import os
 
 import aws_cdk as cdk
-from lib.shared_constructs.common_resource import CommonResourceStack as CommonStackClass  # Renamed to avoid naming conflict
-from lib.main_infrastructure import MainInfrastructureStack
-from lib.shared_constructs.mediator import MediatorStack as MediatorStackClass  # Renamed to avoid naming conflict
-from lib.consumers.niche_finder import NicheFinderStack
+from infra.lib.shared_constructs.common_resource import CommonResourceStack as CommonStackClass  # Renamed to avoid naming conflict
+from infra.lib.main_infrastructure import MainInfrastructureStack
+from infra.lib.shared_constructs.mediator import MediatorStack as MediatorStackClass  # Renamed to avoid naming conflict
+from infra.lib.consumers.niche_finder import NicheFinderStack
 
 
 app = cdk.App()
