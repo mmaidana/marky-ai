@@ -3,7 +3,7 @@ import aws_cdk as cdk
 from lib.main_infrastructure import MainInfrastructureStack
 from lib.shared_constructs.mediator import MediatorStack as MediatorStackClass
 from lib.consumers.niche_finder import NicheFinderStack
-import app
+import backend.app as app
 
 
 class TestApp(unittest.TestCase):

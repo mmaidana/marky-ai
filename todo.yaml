@@ -16,3 +16,6 @@ create CI/CD
 create environments,
 create test cases, 
 create promotions and gating
+create marky-ai-api repo
+rename this repo to marky-ai-infra
+create marky-ai-consumer-app repo
