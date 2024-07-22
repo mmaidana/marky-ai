@@ -1,4 +1,6 @@
+%%{init: {'securityLevel': 'loose'}}%%
 flowchart LR
+    %% External ID: get-niches-process-flow-id-1
     Start(("Start: Step 1: Get Niche"))  -- Hourly CronJob Or Manual Calls to Lambda --> B[["Niche Lambda"]]
     B -- Add Query to Queue --> C{"Niche SQS Check the Queue"}
     C -- Previous Process Finished? --> D[["Process Niche Queue"]]
@@ -51,3 +53,4 @@ flowchart LR
     style E fill:#2962FF,color:#FFFFFF
     style I stroke-width:1px,stroke-dasharray: 0,fill:#000000,color:#FFFFFF
     style L stroke-width:4px,stroke-dasharray: 5,stroke:#000000,fill:#FF6D00
+   
