@@ -60,9 +60,9 @@ flowchart LR
     M -- Clean Up --> U
     M -- Process Next Item in Niche Queue --> D
     U -- Trigger Step 2 --> End((("End Step 1")))
-    subgraph Step 2
-    End-->StartA(("Start Step 2: Get Affiliate Program"))
-    end
+    %%subgraph Step 2
+    %%End-->StartA(("Start Step 2: Get Affiliate Program"))
+    %%end
     classDef processStyle stroke-width:2px,stroke-dasharray: 2,stroke:#000000,fill:#FFD600;
     class T,U,N,Q,B,D processStyle;
     classDef startEndStyle stroke:none,fill:#4CAF50,color:#FFFFFF,stroke-width:4px,stroke-dasharray: 0;
