@@ -1,5 +1,8 @@
 # AWS Resources Configurations
 
+region: "ap-southeast-2"
+account_id: "058264467229"
+
 # Bucket names
 bucket_names:
   data-stream-bucket: "data-stream-bucket"

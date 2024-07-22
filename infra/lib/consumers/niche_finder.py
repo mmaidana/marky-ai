@@ -137,3 +137,31 @@ class NicheFinderStack(cdk.Stack):
 
         except Exception as e:
             self.logger.error(f"Error creating CloudWatch Events Rule: {str(e)}")
+
+# from aws_cdk import core
+# from aws_cdk.aws_events import Schedule, Rule, EventTarget
+# from aws_cdk.aws_events_targets import LambdaFunction
+
+# class MyStack(core.Stack):
+
+#     def __init__(self, scope: core.Construct, construct_id: str, **kwargs) -> None:
+#         super().__init__(scope, construct_id, **kwargs)
+
+#         # Define Lambda function (replace with your actual Lambda construct)
+#         get_niches_lambda = Fn.get_att(
+#             "get_niches_lambda.Arn"  # Replace with your Lambda function logical ID
+#         )
+
+#         # Create CloudWatch Events rule - trigger every minute
+#         get_niches_rule = Rule(
+#             self, "get_niches_rule",
+#             description="Trigger get_niches Lambda function every minute",
+#             schedule=Schedule.cron(minute="*", hour="*", day_of_month="*", month="*", year="*")
+#         )
+
+#         # Add Lambda function as target for the rule
+#         get_niches_rule.add_target(EventTarget(get_niches_lambda))
+
+# app = core.App()
+# MyStack(app, "get-niches-stack")
+# app.synth()

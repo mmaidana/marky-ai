@@ -1,6 +1,9 @@
 # Configuration for Niche Finder Lambda function
 #cloudwatch schedule expression (Cron Job) Specify how often to run the Lambda function to query for finding niches
-cloudwatch_schedule_expression: "cron(0 * * * ? *)"  # Every hour (replace as needed)
+cloudwatch_schedule_expression: "cron(* * * * ? *)"  # Every hour (replace as needed) changed to every minute for testing
+
+# Lambda function configuration
+lambda_function_name: "consumer-niche-finder"  # Name of the Lambda function
 
 # Add other configuration parameters as needed
 api_key: "your-gemini-api-key"  # Example for a hypothetical API key

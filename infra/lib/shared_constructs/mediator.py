@@ -19,6 +19,10 @@ class MediatorStack(cdk.Stack):
             # Loading Config Data
             config = ConfigConstruct(self, "InfraConfig", config_file_path="main-infrastructure.yaml")
             logger.info("Infra Configuration data loaded successfully in " + StackName)
+            region = config.get_value("region")
+            account_id = config.get_value("account_id")
+            region_account_id=f"{region}:{account_id}"
+            logger.info(f"region: {region}, account_id: {account_id}, region_account_id: {region_account_id}")
 
             # Loading Mediator Config Data
             mediator_config = ConfigConstruct(self, "MediatorConfig", config_file_path="mediator.yaml")
@@ -44,7 +48,8 @@ class MediatorStack(cdk.Stack):
                 if queue_name in self.queues:
                     logger.error(f"Duplicate queue name detected: {queue_name}")
                     raise Exception(f"Duplicate queue name detected: {queue_name}")
-                self.queues[queue_name] = sqs.Queue.from_queue_arn(self, queue_name, f"arn:aws:sqs:region:account-id:{queue_config['name']}")
+                self.queues[queue_name] = sqs.Queue.from_queue_arn(self, queue_name, f"arn:aws:sqs:{region_account_id}:{queue_config['name']}")
+                
             
             # Setup for SNS topics
             self.topics = {}
@@ -53,7 +58,7 @@ class MediatorStack(cdk.Stack):
                 if topic_key in self.topics:
                     logger.error(f"Duplicate topic key detected: {topic_key}") 
                     raise Exception(f"Duplicate topic key detected: {topic_key}")
-                self.topics[topic_key] = sns.Topic.from_topic_arn(self, topic_key, f"arn:aws:sns:region:account-id:{topic_name}")
+                self.topics[topic_key] = sns.Topic.from_topic_arn(self, topic_key, f"arn:aws:sns:{region_account_id}:{topic_name}")
         
         except Exception as e:
             logger.error(f"An error occurred: {str(e)}")

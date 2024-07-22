@@ -82,6 +82,7 @@ def nicheFinder(event, context):
         "message": "Niche finder results are ready!",
     }
     sns_client = boto3.client("sns")
+    print ( f"Sending SNS notification to {phone_number} and {email_address}")
     try:
         sns_client.publish(
             TopicArn=sns_topic_arn,
@@ -104,3 +105,36 @@ def nicheFinder(event, context):
         "statusCode": 200,
         "body": json.dumps("Niche finder processing completed!"),
     }
+
+
+#import boto3
+
+# def get_niches(event, context):
+#   # Your Lambda function logic to retrieve niches from Gemini AI
+#   # (replace with your actual implementation)
+#   print("Fetching niches from Gemini AI...")
+#   # Replace with your Gemini AI interaction logic (e.g., API calls)
+#   niches = ["niche1", "niche2", "niche3"]
+
+#   # Get S3 client
+#   s3_client = boto3.client('s3')
+  
+#   # Check if it's the first time (implement logic to check a flag)
+#   is_first_time = ...
+
+#   if is_first_time:
+#     # Save results to S3 bucket
+#     s3_client.put_object(Body=json.dumps(niches), Bucket='your-niche-bucket', Key='niches.json')
+    
+#     # Notify marketeer using SNS (assuming SNS topic exists)
+#     sns_client = boto3.client('sns')
+#     sns_client.publish(TopicArn='your-niche-updates-topic', Message='New niches found!')
+#   else:
+#     # Trigger Lambda function to parse results (assuming parse_results.py exists)
+#     lambda_client = boto3.client('lambda')
+#     lambda_client.invoke(FunctionName='parse_results', Payload=json.dumps(niches))
+  
+#   return {
+#       'statusCode': 200,
+#       'body': json.dumps('Niches retrieved successfully!')
+#   }

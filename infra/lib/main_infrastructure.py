@@ -17,7 +17,9 @@ import uuid
 from .custom_constructs.config_construct import ConfigConstruct
 from aws_cdk import aws_logs as logs
 from aws_cdk.aws_lambda import Code, Runtime
+import boto3
 import re
+
 
 
 class MainInfrastructureStack(cdk.Stack):
@@ -214,6 +216,7 @@ class MainInfrastructureStack(cdk.Stack):
         return sns_topics
     
     def _create_sqs_queues(self, config_data, unique_id):
+        sqs_client = boto3.client('sqs', region_name=config_data.get_value("region"))  # Specify your region
         queue_configs = config_data.get_value('queue_configs', {})
         sqs_queues = {}
         self._create_resource_tagger("ResourceType", "SQS Queue")
@@ -223,19 +226,30 @@ class MainInfrastructureStack(cdk.Stack):
                 # Ensure unique names by appending a suffix or modifying the naming strategy
                 unique_queue_name = self._generate_unique_resource_name(queue_name, unique_id) #f"{queue_name}-queue-{unique_id}"  # Example modification
 
-                # Check if the unique name already exists to avoid conflicts
-                if unique_queue_name in self.node.children:
-                    raise ValueError(f"A construct with the name {unique_queue_name} already exists in the stack")
+                # Check if the SQS queue exists
+                queues = sqs_client.list_queues(QueueNamePrefix=queue_config['name'])
+                queue_urls = queues.get('QueueUrls', [])
 
-                # Create the SQS queue with the unique name
-                queue = sqs.Queue(
-                    self, unique_queue_name,
-                    queue_name=queue_config['name'],
-                    visibility_timeout=cdk.Duration.seconds(queue_config['visibility_timeout'])
-                )
-                self.logger.info(f"Created SQS queue '{queue_name}' with unique name '{unique_queue_name}'")
-                sqs_queues[queue_name] = queue
-                self._create_resource_tagger("QueueName", queue_name)
+                if 'QueueUrls' in queues:
+                    for queue_url in queues['QueueUrls']:
+                        print(queue_url)
+                else:
+                    print("No queues found with the prefix:", unique_queue_name)
+
+                queue_exists = any(queue_config['name'] in url for url in queue_urls)
+                self.logger.info(f"Queue exists: {queue_exists} -  Queue Name: {unique_queue_name} - Queue URL: {queue_urls}")
+                if not queue_exists:
+                    # Queue does not exist, create it
+                    queue = sqs.Queue(
+                        self, unique_queue_name,
+                        queue_name=queue_config['name'],
+                        visibility_timeout=cdk.Duration.seconds(queue_config['visibility_timeout'])
+                    )
+                    self.logger.info(f"Created SQS queue '{queue_name}' with unique name '{unique_queue_name}'"),
+                    sqs_queues[queue_name] = queue
+                else:   
+                    # Queue already exists
+                    self.logger.info(f"Queue '{unique_queue_name}' already exists.")
             except Exception as e:
                 self.logger.error(f"Failed to create SQS queue '{queue_name}': {e}")
 
