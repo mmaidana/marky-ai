@@ -230,12 +230,6 @@ class MainInfrastructureStack(cdk.Stack):
                 queues = sqs_client.list_queues(QueueNamePrefix=queue_config['name'])
                 queue_urls = queues.get('QueueUrls', [])
 
-                if 'QueueUrls' in queues:
-                    for queue_url in queues['QueueUrls']:
-                        print(queue_url)
-                else:
-                    print("No queues found with the prefix:", unique_queue_name)
-
                 queue_exists = any(queue_config['name'] in url for url in queue_urls)
                 self.logger.info(f"Queue exists: {queue_exists} -  Queue Name: {unique_queue_name} - Queue URL: {queue_urls}")
                 if not queue_exists:
@@ -354,12 +348,12 @@ class MainInfrastructureStack(cdk.Stack):
                 self,
                 "process-dynamodb-update",
                 runtime=lambda_.Runtime.PYTHON_3_9,
-                handler="process_dynamodb_update.handler",  # Adjust the handler accordingly
-                code=lambda_.Code.from_asset(F"{self.lambda_handler_path}/process_update"),
-                log_group=self.log_group
+                code=lambda_.Code.from_asset(f"{self.lambda_handler_path}/process_update"),
+                handler="process_update.handler",  # Adjust the handler accordingly
+                log_group=self.log_group,
                 #environment={
                 #    "TABLE_NAMES": json.dumps(table_names),  # Pass table names to Lambda function
-                # Other environment variables if needed
+                #     Other environment variables if needed
                 #}
             )
             self.logger.info("Created process update Lambda function")
@@ -376,7 +370,7 @@ class MainInfrastructureStack(cdk.Stack):
                 self,
                 "get-timestamp-func",
                 runtime=lambda_.Runtime.PYTHON_3_9,
-                code=lambda_.Code.from_asset(F"{self.lambda_handler_path}/get_timestamp"),
+                code=lambda_.Code.from_asset(f"{self.lambda_handler_path}/get_timestamp"),
                 handler="get_timestamp.handler",
                 log_group=self.log_group
 

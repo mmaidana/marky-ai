@@ -4,6 +4,7 @@ from ..custom_constructs.config_construct import ConfigConstruct
 from constructs import Construct
 from aws_cdk import aws_logs as logs
 import logging
+import boto3
 
 class MediatorStack(cdk.Stack):
     def __init__(self, scope: Construct, id: str,common_stack, **kwargs):
@@ -52,15 +53,45 @@ class MediatorStack(cdk.Stack):
                 
             
             # Setup for SNS topics
+            # Assuming 'self' context is part of a class, otherwise adjust accordingly
             self.topics = {}
             for topic_key, topic_name in config['topic_names'].items():
                 logger.info(f"Referencing SNS topic with key: {topic_key}, name: {topic_name}")
                 if topic_key in self.topics:
-                    logger.error(f"Duplicate topic key detected: {topic_key}") 
+                    logger.error(f"Duplicate topic key detected: {topic_key}")
                     raise Exception(f"Duplicate topic key detected: {topic_key}")
-                self.topics[topic_key] = sns.Topic.from_topic_arn(self, topic_key, f"arn:aws:sns:{region_account_id}:{topic_name}")
+                logger.info(f"Getting SNS topic ARN for display name: {topic_name}")
+                topic_arn = self.get_topic_arn_by_display_name(topic_name)
+                if topic_arn:
+                    # Assuming 'sns.Topic.from_topic_arn' is a valid method, adjust if necessary
+                    # This might require importing the 'sns' module from boto3 or another library
+                    self.topics[topic_key] = topic_arn
+                else:
+                    logger.error(f"Could not find SNS topic with display name: {topic_name}")
         
         except Exception as e:
             logger.error(f"An error occurred: {str(e)}")
-            
+        
         end_logger = common_stack._end_logger(StackName=StackName)
+
+
+    def get_topic_arn_by_display_name(self,display_name):
+        try:
+            print("getting arn from display" + display_name)
+            sns_client = boto3.client('sns')
+            response = sns_client.list_topics()
+            topics = response['Topics']
+            #print("Topics: " + ', '.join([topic['TopicArn'] for topic in topics]))
+            
+            for topic in topics:
+                topic_arn = topic['TopicArn']
+                attrs = sns_client.get_topic_attributes(TopicArn=topic_arn)
+                if attrs['Attributes'].get('DisplayName') == display_name:
+                    print (f"Found topic ARN: {topic_arn}")
+                    return topic_arn
+            return None
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            return None
+            
+        

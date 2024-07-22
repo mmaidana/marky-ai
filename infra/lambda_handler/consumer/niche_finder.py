@@ -1,6 +1,7 @@
 import os
 import json
 import boto3  # Import boto3 for AWS interactions
+#from ...lib.shared_constructs.lambda_logging_layer import LambdaLoggingLayer
 
 #@todo: 
 # 1. Replace the placeholder code with actual Gemini API integration code.
@@ -11,6 +12,7 @@ import boto3  # Import boto3 for AWS interactions
 # 6. Test the Lambda function with sample input data. Simulate API responses.
 # 7. Deploy the Lambda function using AWS CDK. (set up credentials, permissions, etc.)
 
+#logger = _create_logger("NicheFinderLambda")  # Create logger instance
 
 
 def nicheFinder(event, context):
@@ -24,6 +26,8 @@ def nicheFinder(event, context):
     prompt_data = os.environ["NICHE_FINDER_PROMPT_DATA"]
 
     print (f"Processing prompt data: {prompt_data}")
+    print (f"Processing event: {event}")
+    #logger.info("Processing event: %s", event)
 
     # Your Lambda function logic here (using prompt_file_name, config_data)
     # ...
@@ -82,29 +86,30 @@ def nicheFinder(event, context):
         "message": "Niche finder results are ready!",
     }
     sns_client = boto3.client("sns")
-    print ( f"Sending SNS notification to {phone_number} and {email_address}")
+    print ( f"Sending SNS notification to  {email_address}")
+    #logger.info(f"Sending SNS notification to {phone_number} and {email_address}")
     try:
-        sns_client.publish(
+        response = sns_client.publish(
             TopicArn=sns_topic_arn,
             Message=json.dumps(message),
             Subject="Niche Finder Results",
-            PhoneNumber=phone_number,
-            MessageAttributes={
-                "Email": {
-                    "DataType": "String",
-                    "StringValue": email_address,
-                }
-            },
         )
+        return {
+            "statusCode": 200,
+            " body": json.dumps(f"Niche finder processing completed! {response}"),
+        }
     except Exception as e:
         print(f"Error sending SNS notification: {e}")
+        #logger.error(f"Error sending SNS notification: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps(f"Error sending SNS notification: {e}"),
+        }
 
     # ... (rest of your function logic)
+    #end_logger = _end_logger("NicheFinderLambda")  # End logger instance
+    
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps("Niche finder processing completed!"),
-    }
 
 
 #import boto3

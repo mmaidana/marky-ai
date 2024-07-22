@@ -9,6 +9,8 @@ from infra.lib.custom_constructs.config_construct import ConfigConstruct
 from aws_cdk import aws_logs as logs
 from aws_cdk.aws_lambda import Code, Runtime
 import os
+from infra.lib.shared_constructs.lambda_loggin_layer import LambdaLoggingLayer  # Import the LoggingLayer construct
+
 
 class NicheFinderStack(cdk.Stack):
 
@@ -20,6 +22,9 @@ class NicheFinderStack(cdk.Stack):
             StackName = cdk.Stack.of(self).stack_name
             logger = common_stack._create_logger(StackName=StackName)
             self.logger = logger
+            # Import the logging layer
+            self.logging_layer = LambdaLoggingLayer(self, "LoggingLayer")
+            self.logger.info(f"Logging layer imported successfully")
 
             logger.info("Loading " + StackName + " configuration")
             # Loading Config Data
@@ -44,8 +49,9 @@ class NicheFinderStack(cdk.Stack):
             niche_finder_queue = mediator_stack.queues['niche-finder-queue']
             logger.info(f"Debug: queue_name={niche_finder_queue.queue_name}")
 
-            niche_finder_topic = mediator_stack.topics['niche-finder-topic']
-            logger.info(f"Debug: topic_name={niche_finder_topic.topic_name}")
+            
+            niche_finder_topic_arn = mediator_stack.topics['niche-finder-topic']
+            logger.info(f"Debug: topic_arn={mediator_stack.topics['niche-finder-topic']}") 
 
             # IAM Role for Lambda function
             logger.info("Creating Lambda role")
@@ -53,11 +59,11 @@ class NicheFinderStack(cdk.Stack):
             
 
             # Lambda function
-            logger.info("Creating Lambda function") 
+            logger.info("Calling creation of Lambda function for Niche Finder") 
             # Adjust the path to where your lambda_handler directory is located relative to the script execution path
-            lambda_handler_path = "./infra/lambda_handler/consumer"  # Example if you're in /Users/marcelo/dev
+            lambda_handler_path = "./infra/lambda_handler/consumer/"  # Example if you're in /Users/marcelo/dev
             self.logger.info(f"Lambda Handler path: {lambda_handler_path}")
-            lambda_fn = self._create_lambda_fn(lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic, lambda_handler_path)
+            lambda_fn = self._create_lambda_fn(lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic_arn, lambda_handler_path)
 
             # CloudWatch Events Rule for Lambda function
             logger.info("Creating CloudWatch Events rule for Lambda function")
@@ -98,18 +104,20 @@ class NicheFinderStack(cdk.Stack):
 
     
     #  Create Lambda function    
-    def _create_lambda_fn(self, lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic, lambda_handler_path):
+    def _create_lambda_fn(self, lambda_role, shared_config_data, prompt_data, niche_finder_s3_bucket, niche_finder_queue, niche_finder_topic_arn, lambda_handler_path):
+        self.logger.info("Creating Niche Finder Lambda function")
         try:
             # Lambda function (receive prompt and config file names from config data construct)
             lambda_fn = Function(self, "NicheFinderLambdaFn",
                                  runtime=Runtime.PYTHON_3_9,
-                                 code=Code.from_asset(F"{lambda_handler_path}"),
-                                 handler="NicheFinder.handler",
+                                 code=Code.from_asset(f"{lambda_handler_path}"),
+                                 handler="niche_finder.nicheFinder",
                                  role=lambda_role,
+                                 layers=[self.logging_layer.layer],
                                  environment={
                                      "NICHE_FINDER_S3_BUCKET_NAME": niche_finder_s3_bucket.bucket_name,
                                      "NICHE_FINDER_SQS_QUEUE_URL": niche_finder_queue.queue_url,
-                                     "NICHE_FINDER_SNS_TOPIC_ARN": niche_finder_topic.topic_arn,
+                                     "NICHE_FINDER_SNS_TOPIC_ARN": niche_finder_topic_arn,
                                      "NICHE_FINDER_SNS_PHONE_NUMBER": shared_config_data.get_value("subscription-phone-number"), 
                                      "NICHE_FINDER_SNS_EMAIL_ADDRESS": shared_config_data.get_value("subscription-email-address"),
                                      "NICHE_FINDER_PROMPT_DATA": prompt_data.get_value("prompt")
