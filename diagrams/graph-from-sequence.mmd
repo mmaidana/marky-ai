@@ -1,7 +1,7 @@
 flowchart LR
-    A("Step 1: Get Niche") -- CronJob Call Lambda every hour --> B[["Niche Lambda"]]
+    Start(("Start: Step 1: Get Niche"))  -- Hourly CronJob Or Manual Calls to Lambda --> B[["Niche Lambda"]]
     B -- Add Query to Queue --> C{"Niche SQS Check the Queue"}
-    C -- Queue Empty? --> D[["Process Niche Queue"]]
+    C -- Previous Process Finished? --> D[["Process Niche Queue"]]
     D -- Queue is being processed --> B
     B -- Get list of niches --> E("Gemini AI")
     E -- Get Results --> F{"Lambda Processor"}
@@ -15,7 +15,7 @@ flowchart LR
     Q -- Add Niche/s to Database --> K[("Niche DynamoDB")]
     Q -- Publish Notifications --> T
     T -- Notify - File Created --> L[/"Marketeer"\]
-    Q -- Trigger Step 2 --> M((("End Step 1")))
+    Q -- Clean Up --> U[["Run Clean up Process"]]
     F -- else --> N[["Lambda Parser"]]
     N -- Create Branch --> I
     N -- Save File to Bucket with New Niche --> H
@@ -31,22 +31,23 @@ flowchart LR
     L -- Merge Branch --> I
     I -- Github Actions call Parser --> N
     N -- Add Niche to Database --> K
-    N -- Trigger Step 2 --> M
+    N -- Check if the queue is empty --> M{"Is the Queue Empty?"}
+    M -- Clean Up --> U
     M -- Process Next Item in Niche Queue --> D
-    style A stroke:#00C853,fill:#00C853,color:#FFFFFF
-    style B fill:#FF6D00,color:#FFFFFF,stroke-width:2px,stroke-dasharray: 2,stroke:#000000
-    style C fill:#D50000,color:#FFFFFF,stroke-width:4px,stroke-dasharray: 5,stroke:#000000
-    style D color:#000000,fill:#FFD600,stroke-width:2px,stroke-dasharray: 2,stroke:#000000
+    U -- Trigger Step 2 --> End((("End Step 1")))
+    subgraph Step 2
+    End-->StartA(("Start Step 2: Get Affiliate Program"))
+    end
+    classDef processStyle stroke-width:2px,stroke-dasharray: 2,stroke:#000000,fill:#FFD600;
+    class T,U,N,Q,B,D processStyle;
+    classDef startEndStyle stroke:none,fill:#4CAF50,color:#FFFFFF,stroke-width:4px,stroke-dasharray: 0;
+    class Start,End,StartA startEndStyle;
+    classDef labelStyle fill:#FFE0B2,stroke:#000000
+    class R labelStyle
+    classDef decisionStyle color:#FFFFFF,fill:#D50000,stroke-width:4px,stroke-dasharray: 5,stroke:#000000
+    class F,C,M,O decisionStyle
+    classDef dbStyle stroke:#000000,fill:#BBDEFB
+    class K,H dbStyle
     style E fill:#2962FF,color:#FFFFFF
-    style F color:#FFFFFF,fill:#D50000,stroke-width:4px,stroke-dasharray: 5,stroke:#000000
-    style Q fill:#FFD600,color:#FFFFFF,stroke-width:2px,stroke-dasharray: 2,stroke:#000000
-    style H stroke:#000000,fill:#BBDEFB,color:#424242
     style I stroke-width:1px,stroke-dasharray: 0,fill:#000000,color:#FFFFFF
-    style T stroke-width:2px,stroke-dasharray: 2,stroke:#000000,fill:#FFD600
-    style K stroke:#000000,fill:#BBDEFB
     style L stroke-width:4px,stroke-dasharray: 5,stroke:#000000,fill:#FF6D00
-    style M stroke:#000000,fill:#00C853
-    style N fill:#FFD600,stroke:#000000,stroke-width:2px,stroke-dasharray: 2
-    style O stroke-width:4px,stroke-dasharray: 5,fill:#D50000,stroke:#000000,color:#FFFFFF
-    style R fill:#FFE0B2,stroke:#000000
-    style S stroke:#000000,color:#FFFFFF,fill:#D50000,stroke-width:4px,stroke-dasharray: 5
