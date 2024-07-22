@@ -9,7 +9,7 @@ from infra.lib.custom_constructs.config_construct import ConfigConstruct
 from aws_cdk import aws_logs as logs
 from aws_cdk.aws_lambda import Code, Runtime
 import os
-from infra.lib.shared_constructs.lambda_loggin_layer import LambdaLoggingLayer  # Import the LoggingLayer construct
+from infra.lambda_handler.consumer.lambda_loggin_layer import LambdaLoggingLayer  # Import the LoggingLayer construct
 
 
 class NicheFinderStack(cdk.Stack):

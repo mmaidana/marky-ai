@@ -1,7 +1,8 @@
 import os
 import json
 import boto3  # Import boto3 for AWS interactions
-#from ...lib.shared_constructs.lambda_logging_layer import LambdaLoggingLayer
+#from .lambda_loggin_layer import LambdaLoggingLayer  # Import the LambdaLoggingLayer construct
+
 
 #@todo: 
 # 1. Replace the placeholder code with actual Gemini API integration code.
@@ -12,7 +13,7 @@ import boto3  # Import boto3 for AWS interactions
 # 6. Test the Lambda function with sample input data. Simulate API responses.
 # 7. Deploy the Lambda function using AWS CDK. (set up credentials, permissions, etc.)
 
-#logger = _create_logger("NicheFinderLambda")  # Create logger instance
+#logger = LambdaLoggingLayer._create_logger("NicheFinderLambda")  # Create logger instance
 
 
 def nicheFinder(event, context):
@@ -94,6 +95,8 @@ def nicheFinder(event, context):
             Message=json.dumps(message),
             Subject="Niche Finder Results",
         )
+        #logger.info(f"SNS notification sent successfully: {response}")
+        #end_logger = LambdaLoggingLayer._end_logger("NicheFinderLambda")  # End logger instance
         return {
             "statusCode": 200,
             " body": json.dumps(f"Niche finder processing completed! {response}"),
@@ -107,7 +110,7 @@ def nicheFinder(event, context):
         }
 
     # ... (rest of your function logic)
-    #end_logger = _end_logger("NicheFinderLambda")  # End logger instance
+   
     
 
 

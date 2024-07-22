@@ -11,7 +11,7 @@ class LambdaLoggingLayer(Construct):
         try:
  # Get the directory containing this file (lambda_logging_layer.py)
             project_root = os.path.dirname(__file__)
-            print("tproject root is "+ project_root)
+            print("project root is "+ project_root)
 
             # Construct the path to the directory containing common_resource.py
             layer_path = os.path.join(project_root)  # Assuming the directory structure
