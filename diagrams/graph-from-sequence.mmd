@@ -1,41 +1,45 @@
-graph LR
+flowchart LR
+    A["Step 1: Get Niche"] -- CronJob Call Lambda every hour --> B["Niche Lambda"]
+    B -- Add Query to Queue --> C{"Niche SQS Check the Queue"}
+    C -- Queue Empty? --> D["Process Niche Queue"]
+    D -- Queue is being processed --> B
+    B -- Get list of niches --> E("Gemini AI")
+    E -- Get Results --> F{"Lambda Processor"}
+    F -- First Time? --> Q["Lambda Settler"]
+    Q -- Save Brand New File to Bucket --> H("Niche S3 Bucket")
+    Q -- Create Niche Repo --> I("Github")
+    Q -- Commit file to Repo --> I
+    H -- Commit file to Repo --> I
+    I -- Publish Event to Niche SNS --> T["Niche SNS Topic"]
+    T -- Lambda Settler is subscribe to topic --> Q
+    Q -- Add Niche/s to Database --> K("Niche DynamoDB")
+    Q -- Publish Notifications --> T
+    T -- Notify - File Created --> L("Marketeer")
+    Q -- Trigger Step 2 --> M("End Step 1")
+    F -- else --> N("Lambda Parser")
+    N -- Create Branch --> I
+    N -- Save File to Bucket with New Niche --> H
+    N -- Commit File to Branch --> I
+    H -- Commit File to Branch --> I
+    N -- Parser Review Results --> O("Lambda Reviewer")
+    O -- New Niche? --> $NewNiche$("Notify Marketeer")
+    $NewNiche$ --> T
+    T -- Notify- New Niches to Review --> L
+    L -- Review Results --> I
+    I -- Validate Results --> $AcceptResults$("Accept Results")
+    $AcceptResults$ --> L
+    L -- Merge Branch --> I
+    I -- Github Actions call Parser --> N
+    N -- Add Niche to Database --> K
+    N -- Trigger Step 2 --> M
+    M -- Process Next Item in Niche Queue --> D
+    M -- Trigger Step 2 --> PdoubleCircleId((("Start Step 2")))
+    style A stroke:#00C853,fill:#00C853,color:#FFFFFF
+    style B fill:#FF6D00,color:#FFFFFF
+    style C fill:#D50000,color:#FFFFFF
+    style D color:#FFFFFF,fill:#FF6D00
+    style E fill:#2962FF,color:#FFFFFF
+    style F color:#FFFFFF,fill:#D50000
+    style Q fill:#FFD600,color:#FFFFFF
+    style PdoubleCircleId stroke:#00C853,color:#FFFFFF,fill:#00C853
 
-A[Step 1: Get Niche] -->|CronJob Call Lambda every hour|B
-B[Niche Lambda] -->|Add Query to Queue| C
-C[Niche SQS] -->|Queue Empty?| D(Process Niche Queue)
-D -->|Queue is being processed| B
-B -->|Get list of niches| E(Gemini AI)
-E -->|Get Results| F[Lambda Processor]
-F -->|First Time?| $First$(Lambda Settler)
-$First$ --> |Save Brand New File to Bucket|H(Niche S3 Bucket)
-$First$ -->|Create Niche Repo| I(Github)
-$First$ & H -->|Commit file to Repo| I
-I -->|Publish Event to Niche SNS| T[Niche SNS Topic]
-T -->|Lambda Settler is subscribe to topic| $First$
-$First$ -->|Add Niche/s to Database| K(Niche DynamoDB)
-$First$ -->|Publish Notifications| T
-T -->|Notify - File Created| L(Marketeer)
-$First$ -->|Trigger Step 2| M[Step 2: Get Affilliate Program]
-F -->|else| N(Lambda Parser)
-N -->|Create Branch| I
-N -->|Save File to Bucket with New Niche| H
-N & H  -->|Commit File to Branch| I
-N -->|Parser Review Results| O(Lambda Reviewer)
-O -->|New Niche?| $NewNiche$(Notify Marketeer)
-$NewNiche$ --> T
-T --> |Notify- New Niches to Review| L
-L -->|Review Results| I
-I -->|Validate Results| $AcceptResults$(Accept Results)
-$AcceptResults$ --> L
-L -->|Merge Branch| I
-I -->|Github Actions call Parser| N
-N -->|Add Niche to Database| K
-N -->|Trigger Step 2| M
-M -->|Process Next Item in Niche Queue| D
-%%M -->|Get Unprocessed Niches from DB| K
-%%M -->|Call Affilliate Lambda| P[Affilliate Lambda]
-%%P -->|Add Query to Queue| Q[Affiliate SQS]
-%%Q -->|Queue Empty?| R(Process Affilliate Queue)
-%%R -->|Queue is being processed| P
-%%P -->|Get best affilliate programs| E(Gemini AI)
-%%E -->|Get Results| S[Affliate Lambda Processor]
